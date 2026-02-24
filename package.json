@@ -1,0 +1,35 @@
+{
+  "name": "rental-manage-system",
+  "version": "1.0.0",
+  "description": "个人租房管理系统 - 轻量级房东管理工具",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @rental/frontend dev & pnpm --filter @rental/backend dev",
+    "dev:frontend": "pnpm --filter @rental/frontend dev",
+    "dev:backend": "pnpm --filter @rental/backend dev",
+    "build": "pnpm --filter @rental/frontend build && pnpm --filter @rental/backend build",
+    "build:frontend": "pnpm --filter @rental/frontend build",
+    "build:backend": "pnpm --filter @rental/backend build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "prisma:generate": "pnpm --filter @rental/backend prisma:generate",
+    "prisma:migrate": "pnpm --filter @rental/backend prisma:migrate",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
+  },
+  "keywords": [
+    "rental",
+    "property-management",
+    "landlord",
+    "nestjs",
+    "vue3"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

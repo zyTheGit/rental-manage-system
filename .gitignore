@@ -1,0 +1,52 @@
+# 依赖
+node_modules/
+apps/**/node_modules/
+packages/**/node_modules/
+
+# 构建产物
+dist/
+build/
+apps/**/dist/
+apps/**/build/
+coverage/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+apps/**/.env*
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 测试
+.nyc_output/
+coverage/
+
+# 构建产物
+*.tsbuildinfo
+
+# Prisma
+apps/backend/prisma/migrations/
+apps/backend/prisma/*.db
+apps/backend/prisma/*.db-journal
+apps/backend/prisma/dev.db
+apps/backend/dev.db
+apps/backend/dev.db-journal
+
+# 临时文件
+tmp/
+temp/

@@ -1,0 +1,27 @@
+{
+  "extends": "./nest-cli.json",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "dtoFileNameSuffix": [".dto", ".entities"],
+          "controllerFileNameSuffix": [".controller"],
+          "classValidatorShim": true,
+          "introspectComments": true,
+          "dtoKeyOfComment": "description",
+          "controllerKeyOfComment": "description",
+          "enumKeyOfComment": "description",
+          "interceptorKeyOfComment": "description",
+          "guardKeyOfComment": "description",
+          "filterKeyOfComment": "description",
+          "pipeKeyOfComment": "description",
+          "serviceKeyOfComment": "description",
+          "moduleKeyOfComment": "description"
+        }
+      }
+    ]
+  }
+}
