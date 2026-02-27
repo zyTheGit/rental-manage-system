@@ -202,3 +202,78 @@ When a page exceeds 600 lines, extract components:
 4. **Chart initialization**: Use `nextTick()` after DOM updates
 5. **Empty data handling**: Provide fallback arrays for charts: `data || []`
 6. **Page file size**: Extract components when page exceeds 600 lines
+7. **Number conversion in computed**: Use `Number()` when calculating totals from strings
+
+## Styling Guidelines
+
+**IMPORTANT**: For styling changes, use the `frontend-design` skill:
+- Run `skill frontend-design` before making significant UI/styling changes
+- Follow the skill's design thinking process for cohesive aesthetics
+- Use CSS variables from `@/styles/theme.css` consistently
+
+**Checkbox and Interactive Elements:**
+- Use large, visible checkboxes (min 24px) for easy touch interaction
+- Add `cursor: pointer` to clickable elements
+- Provide visual feedback (border color change, background) on selection
+- Display selected values prominently (e.g., `fee-amount-badge`)
+
+**Mobile Form Layout:**
+- Avoid inline hints that overflow on small screens
+- Place hints on separate rows below inputs
+- Use `box-sizing: border-box` for inputs with 100% width
+- Ensure adequate touch targets (min 44px height)
+
+**Fee/Price Display:**
+- Show currency symbol (¥) before amounts
+- Use large font (24px+) for totals
+- Highlight computed values with primary color
+- Show reference prices in muted color with clear label
+
+## Payment Modal Logic
+
+**Fee Calculation Pattern:**
+```typescript
+// Use computed for real-time totals
+const currentTotal = computed(() => {
+  let total = 0
+  if (feeChecks.value.rent) total += Number(feeAmounts.value.rent) || 0
+  if (feeChecks.value.electric) total += Number(feeAmounts.value.electric) || 0
+  // ...
+  return total.toFixed(2)
+})
+
+// Meter calculations
+const calculateElectric = () => {
+  const start = meterReads.value.lastElectricEndRead || 0
+  const end = meterReads.value.electricEndRead || 0
+  if (end < start) {
+    showToast({ type: 'fail', message: `当前读数不能小于${start}` })
+    meterReads.value.electricEndRead = start
+    meterReads.value.electricUsage = 0
+  } else {
+    meterReads.value.electricUsage = end - start
+  }
+  feeAmounts.value.electric = (meterReads.value.electricUsage * houseInfo.value.electricRate).toFixed(2)
+}
+```
+
+**Auto-fill Pattern:**
+```typescript
+// When selecting tenant, auto-fill house info
+const selectTenant = async (tenant: any) => {
+  form.value.tenantId = tenant.id
+  form.value.previousBalance = tenant.balance || 0
+  
+  // Fetch house config and last meter reads
+  const house = await housesApi.getById(tenant.house.id)
+  houseInfo.value = {
+    rent: house.rent,
+    electricRate: house.electricRate,
+    waterRate: house.waterRate
+  }
+  
+  // Auto-select rent with default amount
+  feeChecks.value.rent = true
+  feeAmounts.value.rent = house.rent
+}
+```

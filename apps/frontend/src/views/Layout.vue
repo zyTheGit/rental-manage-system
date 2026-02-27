@@ -1,5 +1,5 @@
 <template>
-  <div class="layout-container">
+  <div class="layout-container" :class="{ 'with-sidebar': !isMobile && showSidebar }">
     <van-sticky v-if="!isMobile || showHeader" :offset-top="0">
       <van-nav-bar
         :title="currentTitle"
@@ -13,10 +13,34 @@
       </van-nav-bar>
     </van-sticky>
 
+    <!-- PC端固定侧边栏 -->
+    <aside v-if="!isMobile && showSidebar" class="desktop-sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">租房管理</div>
+      </div>
+      <van-cell-group inset>
+        <van-cell
+          v-for="item in menuItems"
+          :key="item.key"
+          :title="item.label"
+          :icon="item.icon"
+          is-link
+          @click="handleMenuSelect(item.key)"
+          :class="{ active: route.name === item.key }"
+        />
+      </van-cell-group>
+      <div class="sidebar-footer">
+        <van-button block plain type="danger" @click="handleLogout">
+          退出登录
+        </van-button>
+      </div>
+    </aside>
+
+    <!-- 移动端弹出侧边栏 -->
     <van-popup
       v-model:show="showSidebar"
       position="left"
-      :style="{ width: showSidebar ? '100%' : '240px', height: '100%' }"
+      :style="{ width: '280px', height: '100%' }"
       @opened="onSidebarOpened"
       @closed="onSidebarClosed"
     >
@@ -66,7 +90,7 @@
         <template #icon>
           <span style="font-size: 20px;">📊</span>
         </template>
-        统计
+        首页
       </van-tabbar-item>
       <van-tabbar-item name="Houses">
         <template #icon>
@@ -74,23 +98,17 @@
         </template>
         房屋
       </van-tabbar-item>
-      <van-tabbar-item name="Tenants">
-        <template #icon>
-          <span style="font-size: 20px;">👥</span>
-        </template>
-        租户
-      </van-tabbar-item>
       <van-tabbar-item name="Payments">
         <template #icon>
           <span style="font-size: 20px;">💰</span>
         </template>
         缴费
       </van-tabbar-item>
-      <van-tabbar-item name="UtilityStats">
+      <van-tabbar-item name="More">
         <template #icon>
-          <span style="font-size: 20px;">💧</span>
+          <span style="font-size: 20px;">☰</span>
         </template>
-        水电
+        更多
       </van-tabbar-item>
     </van-tabbar>
   </div>
@@ -112,7 +130,7 @@ const isMobile = computed(() => width.value < 768)
 
 const showSidebar = ref(false)
 const showUserMenu = ref(false)
-const showTabbar = ref(false)
+const showTabbar = ref(true)
 const activeTab = ref(route.name as string)
 
 const menuItems = [
@@ -173,6 +191,10 @@ const handleMenuSelect = (key: string) => {
 }
 
 const handleTabChange = (name: string) => {
+  if (name === 'More') {
+    showSidebar.value = true
+    return
+  }
   router.push({ name })
   activeTab.value = name
 }
@@ -220,6 +242,10 @@ onMounted(() => {
   activeTab.value = route.name as string
   if (isMobile.value) {
     showTabbar.value = true
+    showSidebar.value = false
+  } else {
+    showSidebar.value = true
+    showTabbar.value = false
   }
 })
 </script>
@@ -232,6 +258,30 @@ onMounted(() => {
   background: var(--bg-page);
   display: flex;
   flex-direction: column;
+}
+
+.layout-container.with-sidebar {
+  flex-direction: row;
+}
+
+.desktop-sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.layout-container.with-sidebar .content {
+  flex: 1;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.layout-container.with-sidebar .van-sticky {
+  display: none;
 }
 
 .content {

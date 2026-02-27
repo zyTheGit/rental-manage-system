@@ -21,7 +21,7 @@
       </div>
       <div class="stat-card stat-success">
         <div class="stat-label">出租率</div>
-        <div class="stat-value">{{ (stats.occupancyRate || 0).toFixed(1) }}%</div>
+        <div class="stat-value">{{ ((stats.occupancyRate || 0) * 100).toFixed(0) }}%</div>
       </div>
     </div>
 

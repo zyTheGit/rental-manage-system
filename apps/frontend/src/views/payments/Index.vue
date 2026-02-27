@@ -132,103 +132,183 @@
           <button class="btn-close ripple-effect" @click="closeModal">✕</button>
         </div>
         <div class="modal-body modal-scroll">
-          <div class="compact-row">
-            <div class="compact-field" @click="showTenantPicker = true">
-              <span class="field-label">租户</span>
-              <span class="field-value">{{ tenantText || '选择租户' }} ›</span>
+          <!-- 选择租户 -->
+          <div class="form-section">
+            <div class="form-row" @click="showTenantPicker = true">
+              <span class="form-label">租户</span>
+              <span class="form-value">{{ tenantText || '点击选择 ›' }}</span>
             </div>
-            <div class="compact-field" @click="showDatePicker = true">
-              <span class="field-label">日期</span>
-              <span class="field-value">{{ paidAtText?.split(' ')[0] || '选择日期' }} ›</span>
+            <div class="form-row" @click="showDatePicker = true">
+              <span class="form-label">缴费日期</span>
+              <span class="form-value">{{ paidAtText?.split(' ')[0] || '点击选择 ›' }}</span>
             </div>
           </div>
 
-          <div class="type-section">
-            <div class="type-label">选择类型</div>
-            <div class="type-cards">
-              <div
-                v-for="t in typeOptions"
-                :key="t.value"
-                class="type-chip"
-                :class="{ active: activeTypes.includes(t.value) }"
-                @click="toggleTypeQuick(t.value)"
-              >
-                <span class="chip-icon">{{ t.icon }}</span>
-                <span class="chip-text">{{ t.text }}</span>
+          <!-- 费用明细 -->
+          <div v-if="form.tenantId" class="fee-section">
+            <div class="section-title">费用明细（勾选需要缴费的项目）</div>
+            
+            <!-- 房租 -->
+            <div class="fee-item" :class="{ 'fee-selected': feeChecks.rent }">
+              <div class="fee-header" @click="feeChecks.rent = !feeChecks.rent; toggleFee('rent')">
+                <label class="fee-check-large">
+                  <input type="checkbox" v-model="feeChecks.rent" @change="toggleFee('rent')" />
+                  <span class="checkmark-large"></span>
+                </label>
+                <span class="fee-name">🏠 房租</span>
+                <span v-if="feeChecks.rent" class="fee-amount-badge">¥{{ feeAmounts.rent || 0 }}</span>
+              </div>
+              <div v-if="feeChecks.rent" class="fee-input">
+                <span class="currency">¥</span>
+                <input v-model.number="feeAmounts.rent" type="number" placeholder="金额" @input="calculateTotal" />
+              </div>
+              <div v-if="feeChecks.rent && houseInfo.rent" class="fee-hint-row">
+                <span class="fee-hint-text">参考价: ¥{{ houseInfo.rent }}/月</span>
               </div>
             </div>
-          </div>
 
-          <div v-for="(item, index) in form.items.filter(i => i.type)" :key="index" class="quick-item">
-            <div class="quick-item-header">
-              <span class="quick-type" :class="'type-' + item.type.toLowerCase()">{{ getTypeLabel(item.type) }}</span>
-              <button class="quick-remove" @click="removeItemQuick(item.type)">✕</button>
+            <!-- 电费 -->
+            <div class="fee-item" :class="{ 'fee-selected': feeChecks.electric }">
+              <div class="fee-header" @click="feeChecks.electric = !feeChecks.electric">
+                <label class="fee-check-large">
+                  <input type="checkbox" v-model="feeChecks.electric" @change="toggleFee('electric')" />
+                  <span class="checkmark-large"></span>
+                </label>
+                <span class="fee-name">⚡ 电费</span>
+                <span v-if="feeChecks.electric && feeAmounts.electric" class="fee-amount-badge">¥{{ feeAmounts.electric }}</span>
+              </div>
+              <div v-if="feeChecks.electric" class="fee-meter" @click.stop>
+                <div class="meter-row">
+                  <span class="meter-label">上期读数</span>
+                  <span class="meter-value">{{ meterReads.lastElectricEndRead || houseInfo.electricInitialRead || 0 }}</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">本期读数</span>
+                  <input v-model.number="meterReads.electricEndRead" type="number" class="meter-input" placeholder="输入" @input="calculateElectric" />
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">用电量</span>
+                  <span class="meter-value highlight">{{ meterReads.electricUsage || 0 }} 度</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">单价</span>
+                  <span class="meter-value">¥{{ houseInfo.electricRate || 1 }}/度</span>
+                </div>
+                <div class="meter-row total">
+                  <span class="meter-label">电费金额</span>
+                  <span class="meter-value price">¥{{ feeAmounts.electric || 0 }}</span>
+                </div>
+              </div>
             </div>
-            <div class="quick-input-row">
-              <span class="quick-currency">¥</span>
-              <input v-model.number="item.amount" type="number" class="quick-amount" placeholder="0" />
+
+            <!-- 水费 -->
+            <div class="fee-item" :class="{ 'fee-selected': feeChecks.water }">
+              <div class="fee-header" @click="feeChecks.water = !feeChecks.water">
+                <label class="fee-check-large">
+                  <input type="checkbox" v-model="feeChecks.water" @change="toggleFee('water')" />
+                  <span class="checkmark-large"></span>
+                </label>
+                <span class="fee-name">💧 水费</span>
+                <span v-if="feeChecks.water && feeAmounts.water" class="fee-amount-badge">¥{{ feeAmounts.water }}</span>
+              </div>
+              <div v-if="feeChecks.water" class="fee-meter" @click.stop>
+                <div class="meter-row">
+                  <span class="meter-label">上期读数</span>
+                  <span class="meter-value">{{ meterReads.lastWaterEndRead || houseInfo.waterInitialRead || 0 }}</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">本期读数</span>
+                  <input v-model.number="meterReads.waterEndRead" type="number" class="meter-input" placeholder="输入" @input="calculateWater" />
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">用水量</span>
+                  <span class="meter-value highlight">{{ meterReads.waterUsage || 0 }} 吨</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">单价</span>
+                  <span class="meter-value">¥{{ houseInfo.waterRate || 3 }}/吨</span>
+                </div>
+                <div class="meter-row total">
+                  <span class="meter-label">水费金额</span>
+                  <span class="meter-value price">¥{{ feeAmounts.water || 0 }}</span>
+                </div>
+              </div>
             </div>
-            <template v-if="item.type === 'ELECTRIC' || item.type === 'WATER'">
-              <div class="quick-meter">
-                <input
-                  v-if="item.type === 'ELECTRIC'"
-                  v-model.number="item.electricEndRead"
-                  type="number"
-                  class="quick-meter-input"
-                  placeholder="电表读数"
-                  @input="calculateElectricFee(index)"
-                />
-                <input
-                  v-else
-                  v-model.number="item.waterEndRead"
-                  type="number"
-                  class="quick-meter-input"
-                  placeholder="水表读数"
-                  @input="calculateWaterFee(index)"
-                />
-                <span class="quick-usage">
-                  {{ item.type === 'ELECTRIC' ? (item.electricUsage || 0) + '度' : (item.waterUsage || 0) + '吨' }}
+
+            <!-- 其他费用 -->
+            <div class="fee-item" :class="{ 'fee-selected': feeChecks.other }">
+              <div class="fee-header" @click="feeChecks.other = !feeChecks.other">
+                <label class="fee-check-large">
+                  <input type="checkbox" v-model="feeChecks.other" @change="toggleFee('other')" />
+                  <span class="checkmark-large"></span>
+                </label>
+                <span class="fee-name">📝 其他费用</span>
+                <span v-if="feeChecks.other && feeAmounts.other" class="fee-amount-badge">¥{{ feeAmounts.other }}</span>
+              </div>
+              <div v-if="feeChecks.other" class="fee-other-content" @click.stop>
+                <div class="fee-input-row">
+                  <span class="currency">¥</span>
+                  <input v-model.number="feeAmounts.other" type="number" class="fee-amount-input" placeholder="金额" @input="calculateTotal" />
+                </div>
+                <input v-model="feeRemark.other" type="text" class="fee-remark-input" placeholder="备注说明（选填）" />
+              </div>
+            </div>
+
+            <!-- 上次欠费 -->
+            <div v-if="form.previousBalance !== 0" class="fee-item balance-item">
+              <div class="fee-header">
+                <span class="fee-name">{{ form.previousBalance > 0 ? '⚠️ 上次欠费' : '✅ 上次结余' }}</span>
+              </div>
+              <div class="fee-input">
+                <span class="currency" :class="{ 'text-danger': form.previousBalance > 0, 'text-success': form.previousBalance < 0 }">
+                  {{ form.previousBalance > 0 ? '+' : '' }}¥{{ Math.abs(form.previousBalance).toFixed(2) }}
                 </span>
               </div>
-            </template>
+            </div>
           </div>
 
-          <div class="quick-total">
-            <div class="total-row">
+          <div v-else class="empty-tenant">
+            <span class="empty-icon">👆</span>
+            <p>请先选择租户</p>
+          </div>
+
+          <!-- 汇总 -->
+          <div v-if="form.tenantId" class="summary-section">
+            <div class="summary-row">
               <span>本期费用</span>
-              <span class="total-value">¥{{ totalAmount }}</span>
+              <span class="summary-value">¥{{ currentTotal }}</span>
             </div>
-            <div v-if="form.previousBalance !== 0" class="total-row balance-row">
+            <div v-if="form.previousBalance !== 0" class="summary-row">
               <span>{{ form.previousBalance > 0 ? '上次欠费' : '上次结余' }}</span>
-              <span class="balance-value" :class="{ 'balance-negative': form.previousBalance < 0 }">
+              <span class="summary-value" :class="{ 'text-danger': form.previousBalance > 0, 'text-success': form.previousBalance < 0 }">
                 {{ form.previousBalance > 0 ? '+' : '' }}¥{{ form.previousBalance.toFixed(2) }}
               </span>
             </div>
-            <div class="total-row grand-total-row">
+            <div class="summary-row total">
               <span>应缴金额</span>
-              <span class="grand-total">¥{{ grandTotal }}</span>
+              <span class="summary-grand">¥{{ grandTotal }}</span>
             </div>
-          </div>
-
-          <div class="actual-payment">
-            <div class="payment-row">
-              <span class="payment-label">实缴金额</span>
-              <div class="payment-input-wrapper">
-                <span class="payment-currency">¥</span>
-                <input v-model.number="form.actualPaid" type="number" class="payment-input" placeholder="0" />
+            <div class="summary-row">
+              <span>实缴金额</span>
+              <div class="paid-input">
+                <span class="currency">¥</span>
+                <input v-model.number="form.actualPaid" type="number" placeholder="输入实缴金额" @input="calculateBalance" />
               </div>
             </div>
-            <div class="balance-result" :class="{ 'balance-due': Number(newBalance) > 0, 'balance-change': Number(newBalance) < 0 }">
-              <span v-if="Number(newBalance) > 0">剩余欠费: ¥{{ newBalance }}</span>
-              <span v-else-if="Number(newBalance) < 0">找零: ¥{{ Math.abs(Number(newBalance)).toFixed(2) }}</span>
-              <span v-else>已结清</span>
+            <div class="summary-row" :class="{ 'text-danger': newBalance > 0, 'text-success': newBalance < 0 }">
+              <span>{{ newBalance > 0 ? '剩余欠费' : newBalance < 0 ? '找零' : '已结清' }}</span>
+              <span v-if="newBalance !== 0">¥{{ Math.abs(newBalance).toFixed(2) }}</span>
             </div>
           </div>
 
-          <textarea v-model="form.remark" class="quick-remark" placeholder="备注（选填）" rows="1"></textarea>
+          <!-- 备注 -->
+          <div v-if="form.tenantId" class="form-section">
+            <textarea v-model="form.remark" class="remark-input" placeholder="备注（选填）" rows="2"></textarea>
+          </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary ripple-effect btn-block" @click="handleSave">保存</button>
+          <button class="btn btn-outline" @click="closeModal">取消</button>
+          <button class="btn btn-primary" @click="handleSave" :disabled="!form.tenantId || currentTotal <= 0">确认缴费</button>
         </div>
       </div>
     </div>
@@ -414,11 +494,47 @@ interface PaymentFormItem {
 
 const form = ref({
   tenantId: null as number | null,
-  items: [{ type: '', typeText: '', amount: 0 }] as PaymentFormItem[],
+  items: [] as PaymentFormItem[],
   paidAt: new Date().toISOString(),
   remark: '',
   previousBalance: 0,
   actualPaid: 0
+})
+
+// 新增费用相关的响应式变量
+const feeChecks = ref({
+  rent: false,
+  electric: false,
+  water: false,
+  other: false
+})
+
+const feeAmounts = ref({
+  rent: 0,
+  electric: 0,
+  water: 0,
+  other: 0
+})
+
+const feeRemark = ref({
+  other: ''
+})
+
+const meterReads = ref({
+  lastElectricEndRead: 0,
+  lastWaterEndRead: 0,
+  electricEndRead: 0,
+  waterEndRead: 0,
+  electricUsage: 0,
+  waterUsage: 0
+})
+
+const houseInfo = ref({
+  rent: 0,
+  electricRate: 1,
+  waterRate: 3,
+  electricInitialRead: 0,
+  waterInitialRead: 0
 })
 
 const tenantText = ref('')
@@ -483,13 +599,65 @@ const totalAmount = computed(() => {
   return form.value.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toFixed(2)
 })
 
+const currentTotal = computed(() => {
+  let total = 0
+  if (feeChecks.value.rent) total += Number(feeAmounts.value.rent) || 0
+  if (feeChecks.value.electric) total += Number(feeAmounts.value.electric) || 0
+  if (feeChecks.value.water) total += Number(feeAmounts.value.water) || 0
+  if (feeChecks.value.other) total += Number(feeAmounts.value.other) || 0
+  return total.toFixed(2)
+})
+
 const grandTotal = computed(() => {
-  return (Number(totalAmount.value) + (form.value.previousBalance || 0)).toFixed(2)
+  return (Number(currentTotal.value) + (form.value.previousBalance || 0)).toFixed(2)
 })
 
 const newBalance = computed(() => {
   return (Number(grandTotal.value) - (form.value.actualPaid || 0)).toFixed(2)
 })
+
+const toggleFee = (type: string) => {
+  if (type === 'rent' && feeChecks.value.rent) {
+    feeAmounts.value.rent = houseInfo.value.rent || 0
+  }
+  calculateTotal()
+}
+
+const calculateElectric = () => {
+  const start = meterReads.value.lastElectricEndRead || houseInfo.value.electricInitialRead || 0
+  const end = meterReads.value.electricEndRead || 0
+  if (end < start) {
+    showToast({ type: 'fail', message: `当前读数不能小于${start}` })
+    meterReads.value.electricEndRead = start
+    meterReads.value.electricUsage = 0
+  } else {
+    meterReads.value.electricUsage = end - start
+  }
+  feeAmounts.value.electric = (meterReads.value.electricUsage * (houseInfo.value.electricRate || 1)).toFixed(2)
+  calculateTotal()
+}
+
+const calculateWater = () => {
+  const start = meterReads.value.lastWaterEndRead || houseInfo.value.waterInitialRead || 0
+  const end = meterReads.value.waterEndRead || 0
+  if (end < start) {
+    showToast({ type: 'fail', message: `当前读数不能小于${start}` })
+    meterReads.value.waterEndRead = start
+    meterReads.value.waterUsage = 0
+  } else {
+    meterReads.value.waterUsage = end - start
+  }
+  feeAmounts.value.water = (meterReads.value.waterUsage * (houseInfo.value.waterRate || 3)).toFixed(2)
+  calculateTotal()
+}
+
+const calculateTotal = () => {
+  // 触发重新计算
+}
+
+const calculateBalance = () => {
+  // 触发重新计算
+}
 
 const fetchPayments = async () => {
   loading.value = true
@@ -602,34 +770,49 @@ const onDateConfirm = ({ selectedValues }: any) => {
 const selectTenant = async (tenant: any) => {
   form.value.tenantId = tenant.id
   form.value.previousBalance = tenant.balance || 0
+  tenantText.value = `${tenant.name} - ${tenant.house?.title || ''}`
+  showTenantPicker.value = false
 
-  // 获取租户上次水电表读数
-  try {
-    const meterReads = await tenantsApi.getLastMeterReads(tenant.id) as any
-    form.value.items.forEach((item, index) => {
-      if (item.type === 'ELECTRIC') {
-        item.electricStartRead = meterReads.lastElectricEndRead || 0
-        calculateElectricFee(index)
-      } else if (item.type === 'WATER') {
-        item.waterStartRead = meterReads.lastWaterEndRead || 0
-        calculateWaterFee(index)
-      }
-    })
-  } catch (error) {
-    console.error('获取上次读数失败', error)
+  // 重置费用选择
+  feeChecks.value = { rent: false, electric: false, water: false, other: false }
+  feeAmounts.value = { rent: 0, electric: 0, water: 0, other: 0 }
+  meterReads.value = {
+    lastElectricEndRead: 0,
+    lastWaterEndRead: 0,
+    electricEndRead: 0,
+    waterEndRead: 0,
+    electricUsage: 0,
+    waterUsage: 0
   }
 
-  // 获取房屋的水电费率配置
+  // 获取房屋信息
   if (tenant.house?.id) {
     try {
       const house = await housesApi.getById(tenant.house.id) as any
-      form.value.items.forEach((item) => {
-        item.electricRate = house.electricRate || 0
-        item.waterRate = house.waterRate || 0
-      })
+      houseInfo.value = {
+        rent: house.rent || 0,
+        electricRate: house.electricRate || 1,
+        waterRate: house.waterRate || 3,
+        electricInitialRead: house.electricInitialRead || 0,
+        waterInitialRead: house.waterInitialRead || 0
+      }
+      // 默认选中房租并填充金额
+      feeChecks.value.rent = true
+      feeAmounts.value.rent = house.rent || 0
     } catch (error) {
       console.error('获取房屋配置失败', error)
     }
+  }
+
+  // 获取租户上次水电表读数
+  try {
+    const lastReads = await tenantsApi.getLastMeterReads(tenant.id) as any
+    meterReads.value.lastElectricEndRead = lastReads.lastElectricEndRead || houseInfo.value.electricInitialRead || 0
+    meterReads.value.lastWaterEndRead = lastReads.lastWaterEndRead || houseInfo.value.waterInitialRead || 0
+  } catch (error) {
+    console.error('获取上次读数失败', error)
+    meterReads.value.lastElectricEndRead = houseInfo.value.electricInitialRead || 0
+    meterReads.value.lastWaterEndRead = houseInfo.value.waterInitialRead || 0
   }
 }
 
@@ -1858,6 +2041,381 @@ onMounted(() => fetchPayments())
   color: var(--primary);
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* 新缴费表单样式 */
+.form-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+}
+
+.form-row:last-child {
+  border-bottom: none;
+}
+
+.form-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.form-value {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.fee-section {
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 10px 16px;
+  background: var(--bg-input);
+}
+
+.fee-item {
+  background: var(--bg-card);
+  margin-bottom: 8px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.fee-item.fee-selected {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.fee-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  gap: 12px;
+}
+
+.fee-name {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.fee-amount-badge {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.fee-check-large {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.fee-check-large input {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.fee-check-large .checkmark-large {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  transition: all 0.2s ease;
+}
+
+.fee-check-large input:checked + .checkmark-large {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.fee-check-large input:checked + .checkmark-large::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.fee-input {
+  display: flex;
+  align-items: center;
+  padding: 0 16px 14px;
+  gap: 8px;
+}
+
+.fee-input .currency {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.fee-input input {
+  flex: 1;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 16px;
+  background: var(--bg-input);
+}
+
+.fee-input input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.fee-hint-row {
+  padding: 0 16px 14px;
+}
+
+.fee-hint-text {
+  display: inline-block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+}
+
+.fee-other-content {
+  padding: 0 16px 14px;
+}
+
+.fee-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.fee-input-row .currency {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.fee-amount-input {
+  flex: 1;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 16px;
+  background: var(--bg-input);
+}
+
+.fee-amount-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.fee-remark-input {
+  width: 100%;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  background: var(--bg-input);
+  box-sizing: border-box;
+}
+
+.fee-remark-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.fee-meter {
+  padding: 0 16px 14px;
+}
+
+.meter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.meter-row.total {
+  border-top: 1px dashed var(--border-light);
+  margin-top: 8px;
+  padding-top: 12px;
+}
+
+.meter-label {
+  color: var(--text-secondary);
+}
+
+.meter-value {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.meter-value.highlight {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.meter-value.price {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.meter-input {
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  text-align: right;
+  background: var(--bg-input);
+}
+
+.meter-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.balance-item {
+  background: var(--primary-light);
+}
+
+.empty-tenant {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-tenant .empty-icon {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.summary-section {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.summary-row.total {
+  border-top: 2px solid var(--primary);
+  margin-top: 8px;
+  padding-top: 12px;
+}
+
+.summary-value {
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.summary-grand {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.paid-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.paid-input .currency {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.paid-input input {
+  width: 100px;
+  padding: 6px 10px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: right;
+  background: var(--bg-input);
+}
+
+.text-danger {
+  color: var(--accent) !important;
+}
+
+.text-success {
+  color: #16a34a !important;
+}
+
+.remark-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  background: var(--bg-input);
+  resize: none;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-light);
+}
+
+.btn-outline {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.btn-outline:active {
+  background: var(--bg-input);
 }
 
 .quick-total {
