@@ -601,6 +601,7 @@ const onDateConfirm = ({ selectedValues }: any) => {
 
 const selectTenant = async (tenant: any) => {
   form.value.tenantId = tenant.id
+  form.value.previousBalance = tenant.balance || 0
 
   // 获取租户上次水电表读数
   try {
