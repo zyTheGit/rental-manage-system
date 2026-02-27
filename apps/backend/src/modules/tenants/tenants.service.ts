@@ -43,8 +43,22 @@ export class TenantsService {
       throw new NotFoundException('该房屋已出租');
     }
 
+    // 处理 rentEnd 可能为空的情况
+    const data: any = {
+      name: createTenantDto.name,
+      phone: createTenantDto.phone,
+      idCard: createTenantDto.idCard,
+      houseId: createTenantDto.houseId,
+      rentStart: new Date(createTenantDto.rentStart),
+      status: 'RENTED',
+    };
+
+    if (createTenantDto.rentEnd) {
+      data.rentEnd = new Date(createTenantDto.rentEnd);
+    }
+
     const tenant = await this.prisma.tenant.create({
-      data: createTenantDto,
+      data,
     });
 
     await this.prisma.house.update({
@@ -90,19 +104,104 @@ export class TenantsService {
   async checkout(id: number) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id },
+      include: { house: true },
     });
 
     if (!tenant) {
       throw new NotFoundException('租户不存在');
     }
 
+    const updatedTenant = await this.prisma.tenant.update({
+      where: { id },
+      data: { status: 'CHECKED_OUT' },
+      include: { house: true },
+    });
+
     await this.prisma.house.update({
       where: { id: tenant.houseId },
       data: { status: 'AVAILABLE' },
     });
 
-    return this.prisma.tenant.delete({
+    return updatedTenant;
+  }
+
+  async getLastMeterReads(id: number) {
+    const tenant = await this.prisma.tenant.findUnique({
       where: { id },
+      include: {
+        house: true,
+        payments: {
+          where: {
+            items: {
+              some: {
+                type: { in: ['WATER', 'ELECTRIC'] },
+              },
+            },
+          },
+          orderBy: { paidAt: 'desc' },
+          take: 1,
+          include: {
+            items: {
+              where: {
+                type: { in: ['WATER', 'ELECTRIC'] },
+              },
+            },
+          },
+        },
+      },
     });
+
+    if (!tenant) {
+      throw new NotFoundException('租户不存在');
+    }
+
+    let lastWaterEndRead = tenant.house?.waterInitialRead || 0;
+    let lastElectricEndRead = tenant.house?.electricInitialRead || 0;
+
+    if (tenant.payments && tenant.payments.length > 0) {
+      const lastPayment = tenant.payments[0];
+      const electricItem = lastPayment.items.find((item) => item.type === 'ELECTRIC');
+      const waterItem = lastPayment.items.find((item) => item.type === 'WATER');
+      if (electricItem?.electricEndRead) {
+        lastElectricEndRead = electricItem.electricEndRead;
+      }
+      if (waterItem?.waterEndRead) {
+        lastWaterEndRead = waterItem.waterEndRead;
+      }
+    }
+
+    return {
+      tenantId: id,
+      lastWaterEndRead,
+      lastElectricEndRead,
+    };
+  }
+
+  exportToCsv(tenants: any[]): string {
+    const headers = [
+      'ID',
+      '姓名',
+      '电话',
+      '身份证号',
+      '房屋标题',
+      '房屋地址',
+      '租期开始',
+      '租期结束',
+      '状态',
+      '创建时间',
+    ];
+    const rows = tenants.map((tenant) => [
+      tenant.id,
+      `"${tenant.name || ''}"`,
+      `"${tenant.phone || ''}"`,
+      `"${tenant.idCard || ''}"`,
+      `"${tenant.house?.title || ''}"`,
+      `"${tenant.house?.address || ''}"`,
+      `"${new Date(tenant.rentStart).toLocaleString('zh-CN')}"`,
+      tenant.rentEnd ? `"${new Date(tenant.rentEnd).toLocaleString('zh-CN')}"` : '-',
+      tenant.status === 'RENTED' ? '已租' : '已退租',
+      `"${new Date(tenant.createdAt).toLocaleString('zh-CN')}"`,
+    ]);
+    return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
   }
 }

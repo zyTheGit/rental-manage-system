@@ -1,4 +1,15 @@
-import { IsString, IsNumber, IsOptional, IsDateString, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsArray,
+  ValidateNested,
+  ArrayMinSize,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum PaymentType {
   RENT = 'RENT',
@@ -7,11 +18,7 @@ export enum PaymentType {
   OTHER = 'OTHER',
 }
 
-export class CreatePaymentDto {
-  @IsNumber()
-  @IsNotEmpty()
-  tenantId: number;
-
+export class CreatePaymentItemDto {
   @IsEnum(PaymentType)
   @IsNotEmpty()
   type: PaymentType;
@@ -20,6 +27,42 @@ export class CreatePaymentDto {
   @IsNotEmpty()
   amount: number;
 
+  @IsNumber()
+  @IsOptional()
+  electricStartRead?: number;
+
+  @IsNumber()
+  @IsOptional()
+  electricEndRead?: number;
+
+  @IsNumber()
+  @IsOptional()
+  electricUsage?: number;
+
+  @IsNumber()
+  @IsOptional()
+  waterStartRead?: number;
+
+  @IsNumber()
+  @IsOptional()
+  waterEndRead?: number;
+
+  @IsNumber()
+  @IsOptional()
+  waterUsage?: number;
+}
+
+export class CreatePaymentDto {
+  @IsNumber()
+  @IsNotEmpty()
+  tenantId: number;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreatePaymentItemDto)
+  items: CreatePaymentItemDto[];
+
   @IsDateString()
   @IsNotEmpty()
   paidAt: string;
@@ -27,4 +70,31 @@ export class CreatePaymentDto {
   @IsString()
   @IsOptional()
   remark?: string;
+
+  @IsNumber()
+  @IsOptional()
+  actualPaid?: number;
+}
+
+export class GetUtilityStatsDto {
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  tenantId?: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  year?: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  month?: number;
+}
+
+export class VerifyShareDto {
+  @IsString()
+  @IsNotEmpty()
+  idCardLast6: string;
 }

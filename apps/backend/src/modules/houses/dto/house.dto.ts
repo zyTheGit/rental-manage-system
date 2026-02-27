@@ -29,6 +29,23 @@ export class CreateHouseDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  // 水电表配置
+  @IsNumber()
+  @IsNotEmpty()
+  waterInitialRead: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  electricInitialRead: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  waterRate: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  electricRate: number;
 }
 
 export class UpdateHouseDto {
@@ -59,6 +76,23 @@ export class UpdateHouseDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  // 水电表配置
+  @IsNumber()
+  @IsOptional()
+  waterInitialRead?: number;
+
+  @IsNumber()
+  @IsOptional()
+  electricInitialRead?: number;
+
+  @IsNumber()
+  @IsOptional()
+  waterRate?: number;
+
+  @IsNumber()
+  @IsOptional()
+  electricRate?: number;
 }
 
 export class UpdateHouseStatusDto {

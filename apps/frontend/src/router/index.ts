@@ -8,6 +8,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/Login.vue')
   },
   {
+    path: '/share/:id',
+    name: 'ShareVerify',
+    component: () => import('@/views/payments/ShareVerify.vue')
+  },
+  {
     path: '/',
     name: 'Layout',
     component: () => import('@/views/Layout.vue'),
@@ -33,6 +38,16 @@ const routes: RouteRecordRaw[] = [
         path: 'payments',
         name: 'Payments',
         component: () => import('@/views/payments/Index.vue')
+      },
+      {
+        path: 'utility-stats',
+        name: 'UtilityStats',
+        component: () => import('@/views/utility-stats/Index.vue')
+      },
+      {
+        path: 'reminders',
+        name: 'Reminders',
+        component: () => import('@/views/reminders/Index.vue')
       }
     ]
   }

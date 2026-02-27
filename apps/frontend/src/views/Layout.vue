@@ -1,123 +1,329 @@
 <template>
-  <n-layout has-sider class="min-h-screen">
-    <n-layout-sider
-      bordered
-      collapse-mode="width"
-      :collapsed-width="64"
-      :width="240"
-      :collapsed="isMobile"
-      show-trigger="arrow-circle"
-      class="hidden md:block"
+  <div class="layout-container">
+    <van-sticky v-if="!isMobile || showHeader" :offset-top="0">
+      <van-nav-bar
+        :title="currentTitle"
+        left-arrow
+        @click-left="toggleLeftDrawer"
+        :placeholder="true"
+      >
+        <template #right>
+          <van-icon name="friends" size="18" @click="handleShowUserMenu" />
+        </template>
+      </van-nav-bar>
+    </van-sticky>
+
+    <van-popup
+      v-model:show="showSidebar"
+      position="left"
+      :style="{ width: showSidebar ? '100%' : '240px', height: '100%' }"
+      @opened="onSidebarOpened"
+      @closed="onSidebarClosed"
     >
-      <div class="h-16 flex items-center justify-center border-b">
-        <h1 class="font-bold text-lg">租房管理</h1>
+      <div class="sidebar-header">
+        <div class="sidebar-title">租房管理</div>
       </div>
-      
-      <n-menu
-        v-model:value="activeKey"
-        :collapsed="isMobile"
-        :collapsed-width="64"
-        :collapsed-icon-size="22"
-        :options="menuOptions"
-        @update:value="handleMenuSelect"
-      />
-    </n-layout-sider>
+      <van-cell-group inset>
+        <van-cell
+          v-for="item in menuItems"
+          :key="item.key"
+          :title="item.label"
+          :icon="item.icon"
+          is-link
+          @click="handleMenuSelect(item.key)"
+          :class="{ active: route.name === item.key }"
+        />
+      </van-cell-group>
 
-    <n-layout>
-      <n-layout-header bordered class="flex items-center justify-between px-6 h-16">
-        <h2 class="text-xl font-bold">{{ currentTitle }}</h2>
-        
-        <div class="flex items-center space-x-4">
-          <div class="flex items-center space-x-3">
-            <n-avatar round>
-              <template #icon>
-                <n-icon>
-                  <PersonIcon />
-                </n-icon>
-              </template>
-            </n-avatar>
-            <span class="text-gray-700">{{ userStore.user?.fullName }}</span>
-          </div>
-          <n-button text @click="handleLogout">退出</n-button>
-        </div>
-      </n-layout-header>
+      <div class="sidebar-footer">
+        <van-button block plain type="danger" @click="handleLogout">
+          退出登录
+        </van-button>
+      </div>
+    </van-popup>
 
-      <n-layout-content>
-        <div class="content">
-          <router-view />
-        </div>
-      </n-layout-content>
-    </n-layout>
-  </n-layout>
+    <van-popup
+      v-model:show="showUserMenu"
+      position="right"
+      round
+      :style="{ width: '200px' }"
+    >
+      <div class="user-info">
+        <van-icon name="user-o" size="40" />
+        <div class="user-name">{{ userStore.user?.fullName || '用户' }}</div>
+      </div>
+      <van-cell-group inset>
+        <van-cell title="退出登录" is-link @click="handleLogout" />
+      </van-cell-group>
+    </van-popup>
+
+    <div class="content">
+      <router-view />
+    </div>
+
+<van-tabbar v-if="isMobile && showTabbar" v-model="activeTab" @change="handleTabChange" :fixed="true" :bordered="false" :placeholder="true">
+      <van-tabbar-item name="Dashboard">
+        <template #icon>
+          <span style="font-size: 20px;">📊</span>
+        </template>
+        统计
+      </van-tabbar-item>
+      <van-tabbar-item name="Houses">
+        <template #icon>
+          <span style="font-size: 20px;">🏠</span>
+        </template>
+        房屋
+      </van-tabbar-item>
+      <van-tabbar-item name="Tenants">
+        <template #icon>
+          <span style="font-size: 20px;">👥</span>
+        </template>
+        租户
+      </van-tabbar-item>
+      <van-tabbar-item name="Payments">
+        <template #icon>
+          <span style="font-size: 20px;">💰</span>
+        </template>
+        缴费
+      </van-tabbar-item>
+      <van-tabbar-item name="UtilityStats">
+        <template #icon>
+          <span style="font-size: 20px;">💧</span>
+        </template>
+        水电
+      </van-tabbar-item>
+    </van-tabbar>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { PersonOutline as PersonIcon } from '@vicons/ionicons5'
+import { showConfirmDialog } from 'vant'
+import { useWindowSize } from '@vueuse/core'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const isMobile = ref(false)
-const activeKey = ref(route.name as string)
+const { width } = useWindowSize()
+const isMobile = computed(() => width.value < 768)
 
-const menuOptions = [
+const showSidebar = ref(false)
+const showUserMenu = ref(false)
+const showTabbar = ref(false)
+const activeTab = ref(route.name as string)
+
+const menuItems = [
   {
     label: '数据统计',
     key: 'Dashboard',
-    icon: () => '📊'
+    icon: 'chart-trending-o'
   },
   {
     label: '房屋管理',
     key: 'Houses',
-    icon: () => '🏠'
+    icon: 'home-o'
   },
   {
     label: '租户管理',
     key: 'Tenants',
-    icon: () => '👥'
+    icon: 'friends-o'
   },
   {
     label: '缴费记录',
     key: 'Payments',
-    icon: () => '💰'
+    icon: 'balance-o'
+  },
+  {
+    label: '水电统计',
+    key: 'UtilityStats',
+    icon: 'chart-trending-o'
+  },
+  {
+    label: '缴费提醒',
+    key: 'Reminders',
+    icon: 'bell'
   }
 ]
 
+const showHeader = computed(() => {
+  return !!route.meta.fullWidthHeader
+})
+
 const currentTitle = computed(() => {
-  const menuItem = menuOptions.find(item => item.key === route.name)
+  const menuItem = menuItems.find(item => item.key === route.name)
   return menuItem?.label || '租房管理系统'
 })
 
+const toggleLeftDrawer = () => {
+  showSidebar.value = !showSidebar.value
+}
+
+const showUserPopup = () => {
+  showUserMenu.value = !showUserMenu.value
+}
+
 const handleMenuSelect = (key: string) => {
-  activeKey.value = key
   router.push({ name: key })
+  if (isMobile.value) {
+    showSidebar.value = false
+  }
+}
+
+const handleTabChange = (name: string) => {
+  router.push({ name })
+  activeTab.value = name
 }
 
 const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
+  showConfirmDialog({
+    title: '确认退出',
+    message: '确定要退出登录吗？'
+  }).then(() => {
+    userStore.logout()
+    router.push('/login')
+  })
+  .catch(() => {
+    // 用户取消
+  })
+  showUserMenu.value = false
 }
 
-const checkMobile = () => {
-  isMobile.value = window.innerWidth < 768
+const onSidebarOpened = () => {
+  if (isMobile.value) {
+    showTabbar.value = false
+  }
 }
 
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
+const onSidebarClosed = () => {
+  if (isMobile.value) {
+    showTabbar.value = true
+  }
+}
+
+const handleShowUserMenu = () => {
+  if (isMobile.value) {
+    showSidebar.value = !showSidebar.value
+  } else {
+    showUserPopup()
+  }
+}
+
+watch(() => route.name, (name) => {
+  activeTab.value = name as string
+  showTabbar.value = isMobile.value && !showSidebar.value
 })
 
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
+onMounted(() => {
+  activeTab.value = route.name as string
+  if (isMobile.value) {
+    showTabbar.value = true
+  }
 })
 </script>
 
 <style scoped>
+@import '@/styles/theme.css';
+
+.layout-container {
+  min-height: 100vh;
+  background: var(--bg-page);
+  display: flex;
+  flex-direction: column;
+}
+
 .content {
-  padding: 24px;
+  flex: 1;
+  padding: 0;
+}
+
+.sidebar-header {
+  padding: 20px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+:deep(.van-cell-group--inset) {
+  margin: 16px;
+}
+
+:deep(.van-cell) {
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  transition: var(--transition);
+}
+
+:deep(.van-cell:active) {
+  background: var(--primary-light);
+}
+
+:deep(.van-cell__title) {
+  color: var(--text-main);
+}
+
+:deep(.van-cell.active) {
+  background: var(--primary-light);
+}
+
+:deep(.van-cell.active .van-cell__title) {
+  color: var(--primary);
+}
+
+:deep(.van-cell.active .van-icon) {
+  color: var(--primary);
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:deep(.van-button--danger) {
+  border-color: transparent;
+}
+
+.user-info {
+  padding: 24px 20px;
+  text-align: center;
+  background: var(--bg-input);
+}
+
+.user-info .van-icon {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 50%;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+:deep(.van-tabbar) {
+  background: var(--bg-card);
+  border-top: 1px solid var(--border-light);
+}
+
+:deep(.van-tabbar-item) {
+  color: var(--text-secondary);
+}
+
+:deep(.van-tabbar-item--active) {
+  color: var(--primary);
+}
+
+:deep(.van-tabbar-item--active .van-tabbar-item__text) {
+  font-weight: 600;
 }
 </style>

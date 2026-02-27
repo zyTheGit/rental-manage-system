@@ -1,12 +1,12 @@
 {
   "name": "rental-manage-system",
-  "version": "1.0.0",
-  "description": "个人租房管理系统 - 轻量级房东管理工具",
+  "version": "2.0.0",
+  "description": "个人租房管理系统 - 轻量级房东管理工具（Vant 4 + Vue 3）",
   "private": true,
   "scripts": {
     "dev": "pnpm --filter @rental/frontend dev & pnpm --filter @rental/backend dev",
-    "dev:frontend": "pnpm --filter @rental/frontend dev",
-    "dev:backend": "pnpm --filter @rental/backend dev",
+    "dev:f": "pnpm --filter @rental/frontend dev",
+    "dev:b": "pnpm --filter @rental/backend dev",
     "build": "pnpm --filter @rental/frontend build && pnpm --filter @rental/backend build",
     "build:frontend": "pnpm --filter @rental/frontend build",
     "build:backend": "pnpm --filter @rental/backend build",
@@ -21,7 +21,8 @@
     "property-management",
     "landlord",
     "nestjs",
-    "vue3"
+    "vue3",
+    "vant"
   ],
   "author": "",
   "license": "MIT",

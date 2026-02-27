@@ -27,35 +27,111 @@ model House {
   area        Float   @default(0)
   status      String  @default("AVAILABLE")
   description String?
+
+  // 水电表配置
+  waterInitialRead    Float   @default(0)  // 水表初始读数
+  electricInitialRead Float   @default(0)  // 电表初始读数
+  waterRate           Float   @default(0)  // 水费单价 (元/吨)
+  electricRate        Float   @default(0)  // 电费单价 (元/度)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   tenants     Tenant[]
 }
 
+model Payment {
+  id        Int          @id @default(autoincrement())
+  tenantId  Int
+  tenant    Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  amount    Float
+  paidAt    DateTime
+  remark    String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  userId    Int?
+  user      User?        @relation(fields: [userId], references: [id])
+  items     PaymentItem[]
+}
+
+model PaymentItem {
+  id              Int      @id @default(autoincrement())
+  paymentId       Int
+  payment         Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  type            String
+  amount          Float
+
+  electricStartRead  Float?  @default(0)
+  electricEndRead    Float?  @default(0)
+  electricUsage      Float?  @default(0)
+
+  waterStartRead     Float?  @default(0)
+  waterEndRead       Float?  @default(0)
+  waterUsage         Float?  @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model UtilityStats {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  year            Int
+  month           Int
+
+  electricStartRead    Float   @default(0)
+  electricEndRead      Float   @default(0)
+  electricUsage        Float   @default(0)
+
+  waterStartRead       Float   @default(0)
+  waterEndRead         Float   @default(0)
+  waterUsage           Float   @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, year, month])
+}
+
 model Tenant {
-  id         Int       @id @default(autoincrement())
+  id         Int           @id @default(autoincrement())
   name       String
   phone      String
   idCard     String
   houseId    Int
-  house      House     @relation(fields: [houseId], references: [id], onDelete: Cascade)
+  house      House         @relation(fields: [houseId], references: [id], onDelete: Cascade)
   rentStart  DateTime
-  rentEnd    DateTime
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  rentEnd    DateTime?
+  status     String        @default("RENTED")
+  balance    Float         @default(0)  // 欠费金额（正数为欠费，负数为结余）
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
   payments   Payment[]
+  utilityStats UtilityStats[]
+  paymentReminder PaymentReminder?
 }
 
-model Payment {
-  id        Int       @id @default(autoincrement())
-  tenantId  Int
-  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  type      String
-  amount    Float
-  paidAt    DateTime
-  remark    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    Int?
-  user      User?     @relation(fields: [userId], references: [id])
+model PaymentReminder {
+  id              Int      @id @default(autoincrement())
+  tenantId        Int
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // 提醒配置
+  reminderDay     Int      @default(1)  // 每月几号提醒（1-28）
+  dueDay          Int      @default(5)  // 每月几号逾期（1-28）
+  enabled         Boolean  @default(true)  // 是否启用
+
+  // 通知配置
+  notifyByEmail   Boolean  @default(false)
+  notifyBySms     Boolean  @default(false)
+
+  // 最后提醒时间
+  lastReminderAt  DateTime?
+  lastDueAt       DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId])
 }

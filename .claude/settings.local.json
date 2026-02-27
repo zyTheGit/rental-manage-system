@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed:*)",
+      "Bash(npx prisma:*)",
+      "Bash(pnpm prisma:generate:*)",
+      "Bash(taskkill:*)",
+      "Bash(pkill:*)",
+      "Bash(curl:*)",
+      "Bash(xxd:*)",
+      "Bash(cp:*)",
+      "Bash(node:*)",
+      "Bash(pnpm prisma:migrate:*)",
+      "Bash(rm:*)",
+      "Bash(pnpm prisma:*)",
+      "Bash(chcp 65001:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(netstat:*)",
+      "Bash(Get-Content:*)"
+    ]
+  }
+}

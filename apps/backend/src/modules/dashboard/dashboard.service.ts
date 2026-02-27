@@ -34,6 +34,9 @@ export class DashboardService {
           gte: currentYear,
         },
       },
+      include: {
+        items: true,
+      },
     });
 
     const yearIncome = yearlyPayments.reduce((sum, p) => sum + p.amount, 0);
@@ -59,10 +62,12 @@ export class DashboardService {
 
     const incomeTrend = await Promise.all(byMonth);
 
-    const byType = yearlyPayments.reduce((acc, p) => {
-      acc[p.type] = (acc[p.type] || 0) + p.amount;
-      return acc;
-    }, {} as Record<string, number>);
+    const byType: Record<string, number> = {};
+    yearlyPayments.forEach((p) => {
+      p.items.forEach((item) => {
+        byType[item.type] = (byType[item.type] || 0) + item.amount;
+      });
+    });
 
     const paymentDistribution = Object.entries(byType).map(([type, amount]) => ({
       name: type,

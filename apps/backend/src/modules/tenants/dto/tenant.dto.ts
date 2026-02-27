@@ -22,8 +22,8 @@ export class CreateTenantDto {
   rentStart: string;
 
   @IsDateString()
-  @IsNotEmpty()
-  rentEnd: string;
+  @IsOptional()
+  rentEnd?: string;
 }
 
 export class UpdateTenantDto {
@@ -50,4 +50,8 @@ export class UpdateTenantDto {
   @IsDateString()
   @IsOptional()
   rentEnd?: string;
+
+  @IsString()
+  @IsOptional()
+  status?: 'RENTED' | 'CHECKED_OUT';
 }

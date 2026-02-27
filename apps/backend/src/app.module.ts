@@ -8,6 +8,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AdminInitModule } from './modules/admin-init/admin-init.module';
 import { JwtConfigModule } from './jwt-config/jwt-config.module';
+import { RemindersModule } from './modules/reminders/reminders.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { JwtConfigModule } from './jwt-config/jwt-config.module';
     PaymentsModule,
     DashboardModule,
     AdminInitModule,
+    RemindersModule,
   ],
 })
 export class AppModule {}

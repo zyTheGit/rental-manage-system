@@ -31,6 +31,10 @@ export interface House {
   status: 'AVAILABLE' | 'RENTED'
   description: string
   createdAt: string
+  waterInitialRead?: number
+  electricInitialRead?: number
+  waterRate?: number
+  electricRate?: number
 }
 
 export const housesApi = {
@@ -39,6 +43,9 @@ export const housesApi = {
   },
   getById: (id: number) => {
     return request.get(`/houses/${id}`)
+  },
+  getByIdWithLastRead: (id: number) => {
+    return request.get(`/houses/${id}/with-last-read`)
   },
   create: (data: Partial<House>) => {
     return request.post('/houses', data)
@@ -50,7 +57,7 @@ export const housesApi = {
     return request.delete(`/houses/${id}`)
   },
   updateStatus: (id: number, status: string) => {
-    return request.patch(`/houses/${id}/status`, { status })
+    return request.put(`/houses/${id}/status`, { status })
   }
 }
 
@@ -63,6 +70,8 @@ export interface Tenant {
   house?: House
   rentStart: string
   rentEnd: string
+  status?: 'RENTED' | 'CHECKED_OUT'
+  balance?: number
   createdAt: string
 }
 
@@ -72,6 +81,9 @@ export const tenantsApi = {
   },
   getById: (id: number) => {
     return request.get(`/tenants/${id}`)
+  },
+  getLastMeterReads: (id: number) => {
+    return request.get(`/tenants/${id}/last-meter-reads`)
   },
   create: (data: Partial<Tenant>) => {
     return request.post('/tenants', data)
@@ -87,27 +99,94 @@ export const tenantsApi = {
   }
 }
 
+export interface PaymentItem {
+  id: number
+  paymentId: number
+  type: 'RENT' | 'WATER' | 'ELECTRIC' | 'OTHER'
+  amount: number
+  electricStartRead?: number
+  electricEndRead?: number
+  electricUsage?: number
+  waterStartRead?: number
+  waterEndRead?: number
+  waterUsage?: number
+}
+
+export interface CreatePaymentItemDto {
+  type: 'RENT' | 'WATER' | 'ELECTRIC' | 'OTHER'
+  amount: number
+  electricStartRead?: number
+  electricEndRead?: number
+  electricUsage?: number
+  waterStartRead?: number
+  waterEndRead?: number
+  waterUsage?: number
+}
+
 export interface Payment {
   id: number
   tenantId: number
   tenant?: Tenant
-  type: 'RENT' | 'WATER' | 'ELECTRIC' | 'OTHER'
   amount: number
   paidAt: string
   remark?: string
   createdAt: string
+  userId?: number
+  items?: PaymentItem[]
+}
+
+export interface CreatePaymentDto {
+  tenantId: number
+  items: CreatePaymentItemDto[]
+  paidAt: string
+  remark?: string
+  actualPaid?: number
 }
 
 export const paymentsApi = {
   getList: (params?: any) => {
     return request.get('/payments', { params })
   },
-  create: (data: Partial<Payment>) => {
+  getById: (id: number) => {
+    return request.get(`/payments/${id}`)
+  },
+  create: (data: CreatePaymentDto) => {
     return request.post('/payments', data)
   },
-  stats: (type: 'month' | 'year') => {
-    return request.get(`/payments/stats/${type}`)
+  getMonthlyStats: () => {
+    return request.get('/payments/stats/monthly')
+  },
+  getYearlyStats: () => {
+    return request.get('/payments/stats/yearly')
+  },
+  getUtilityStats: (params?: any) => {
+    return request.get('/payments/utility-stats', { params })
+  },
+  getTenantUtilityByYear: (tenantId: number, year?: number) => {
+    return request.get(`/payments/utility-stats/tenant/${tenantId}`, { params: year ? { year } : undefined })
+  },
+  getShareVerifyInfo: (id: number) => {
+    return request.get(`/payments/share/${id}/verify`)
+  },
+  verifyShare: (id: number, idCardLast6: string) => {
+    return request.post(`/payments/share/${id}/verify`, { idCardLast6 })
   }
+}
+
+export interface UtilityStats {
+  id: number
+  tenantId: number
+  tenant?: Tenant
+  year: number
+  month: number
+  electricStartRead: number
+  electricEndRead: number
+  electricUsage: number
+  waterStartRead: number
+  waterEndRead: number
+  waterUsage: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface DashboardStats {
@@ -124,5 +203,44 @@ export interface DashboardStats {
 export const dashboardApi = {
   getStats: () => {
     return request.get('/dashboard/stats')
+  }
+}
+
+export interface PaymentReminder {
+  id: number
+  tenantId: number
+  tenant?: Tenant
+  reminderDay: number
+  dueDay: number
+  enabled: boolean
+  notifyByEmail: boolean
+  notifyBySms: boolean
+  lastReminderAt?: string
+  lastDueAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export const remindersApi = {
+  getList: () => {
+    return request.get('/reminders')
+  },
+  getById: (id: number) => {
+    return request.get(`/reminders/${id}`)
+  },
+  getByTenant: (tenantId: number) => {
+    return request.get(`/reminders/tenant/${tenantId}`)
+  },
+  create: (data: Partial<PaymentReminder>, tenantId: number) => {
+    return request.post('/reminders', data, { params: { tenantId } })
+  },
+  update: (id: number, data: Partial<PaymentReminder>) => {
+    return request.put(`/reminders/${id}`, data)
+  },
+  delete: (id: number) => {
+    return request.delete(`/reminders/${id}`)
+  },
+  getOverdue: () => {
+    return request.get('/reminders/overdue')
   }
 }
