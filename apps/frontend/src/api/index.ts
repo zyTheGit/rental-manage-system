@@ -153,6 +153,12 @@ export const paymentsApi = {
   create: (data: CreatePaymentDto) => {
     return request.post('/payments', data)
   },
+  update: (id: number, data: any) => {
+    return request.patch(`/payments/${id}`, data)
+  },
+  delete: (id: number) => {
+    return request.delete(`/payments/${id}`)
+  },
   getMonthlyStats: () => {
     return request.get('/payments/stats/monthly')
   },

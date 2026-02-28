@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreatePaymentDto, GetUtilityStatsDto } from './dto/payment.dto';
+import { CreatePaymentDto, UpdatePaymentDto, GetUtilityStatsDto } from './dto/payment.dto';
 
 @Injectable()
 export class PaymentsService {
@@ -444,5 +444,130 @@ export class PaymentsService {
       ];
     });
     return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+  }
+
+  async update(id: number, updatePaymentDto: UpdatePaymentDto) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id },
+      include: {
+        items: true,
+        tenant: true
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('缴费记录不存在');
+    }
+
+    // 如果有新的items，先删除旧的items
+    if (updatePaymentDto.items && updatePaymentDto.items.length > 0) {
+      await this.prisma.paymentItem.deleteMany({
+        where: { paymentId: id },
+      });
+
+      // 创建新的items
+      for (const item of updatePaymentDto.items) {
+        await this.prisma.paymentItem.create({
+          data: {
+            paymentId: id,
+            type: item.type,
+            amount: item.amount,
+            electricStartRead: item.electricStartRead,
+            electricEndRead: item.electricEndRead,
+            electricUsage: item.electricUsage,
+            waterStartRead: item.waterStartRead,
+            waterEndRead: item.waterEndRead,
+            waterUsage: item.waterUsage,
+          },
+        });
+      }
+
+      // 更新水电表统计
+      const paidAt = updatePaymentDto.paidAt ? new Date(updatePaymentDto.paidAt) : payment.paidAt;
+      const year = paidAt.getFullYear();
+      const month = paidAt.getMonth() + 1;
+      
+      // 先减少旧的统计
+      for (const oldItem of payment.items) {
+        if (oldItem.type === 'ELECTRIC' && oldItem.electricUsage) {
+          await this.decrementUtilityStats(payment.tenantId, year, month, 'electric', oldItem.electricUsage);
+        }
+        if (oldItem.type === 'WATER' && oldItem.waterUsage) {
+          await this.decrementUtilityStats(payment.tenantId, year, month, 'water', oldItem.waterUsage);
+        }
+      }
+      
+      // 添加新的统计
+      await this.updateUtilityStats(payment.tenantId, year, month, updatePaymentDto.items);
+    }
+
+    const totalAmount = updatePaymentDto.items 
+      ? updatePaymentDto.items.reduce((sum, item) => sum + item.amount, 0)
+      : payment.amount;
+
+    return this.prisma.payment.update({
+      where: { id },
+      data: {
+        paidAt: updatePaymentDto.paidAt ? new Date(updatePaymentDto.paidAt) : undefined,
+        remark: updatePaymentDto.remark,
+        amount: totalAmount,
+      },
+      include: {
+        tenant: {
+          include: { house: true },
+        },
+        items: true,
+      },
+    });
+  }
+
+  private async decrementUtilityStats(tenantId: number, year: number, month: number, type: 'electric' | 'water', usage: number) {
+    const existing = await this.prisma.utilityStats.findUnique({
+      where: {
+        tenantId_year_month: {
+          tenantId,
+          year,
+          month,
+        },
+      },
+    });
+
+    if (existing) {
+      const updateData: any = {};
+      if (type === 'electric') {
+        updateData.electricUsage = Math.max(0, existing.electricUsage - usage);
+      } else {
+        updateData.waterUsage = Math.max(0, existing.waterUsage - usage);
+      }
+
+      await this.prisma.utilityStats.update({
+        where: { id: existing.id },
+        data: updateData,
+      });
+    }
+  }
+
+  async remove(id: number) {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('缴费记录不存在');
+    }
+
+    // 删除关联的 items
+    await this.prisma.paymentItem.deleteMany({
+      where: { paymentId: id },
+    });
+
+    // 删除 payment reminder
+    await this.prisma.paymentReminder.deleteMany({
+      where: { tenantId: payment.tenantId },
+    });
+
+    return this.prisma.payment.delete({
+      where: { id },
+    });
   }
 }

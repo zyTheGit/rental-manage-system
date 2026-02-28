@@ -98,6 +98,11 @@
           </div>
           <div v-if="payment.remark" class="payment-remark">{{ payment.remark }}</div>
         </div>
+
+        <div class="card-actions" @click.stop>
+          <button class="btn-action btn-edit" @click="handleEdit(payment)">编辑</button>
+          <button class="btn-action btn-delete-action" @click="handleDelete(payment)">删除</button>
+        </div>
       </div>
 
       <div v-if="filteredPayments.length === 0" class="empty-state">
@@ -113,8 +118,9 @@
     <div v-if="showStartDatePicker || showEndDatePicker" class="modal-overlay" @click.self="closeDatePickers">
       <div class="picker-content slide-in-bottom">
         <div class="picker-header">
-          <button class="btn-link" @click="closeDatePickers">取消</button>
+          <button class="btn btn-outline btn-sm" @click="closeDatePickers">取消</button>
           <h3 class="picker-title">选择日期</h3>
+          <button class="btn btn-primary btn-sm" @click="closeDatePickers">确认</button>
         </div>
         <van-date-picker
           :model-value="currentDateValue"
@@ -184,7 +190,7 @@
                 </div>
                 <div class="meter-row">
                   <span class="meter-label">本期读数</span>
-                  <input v-model.number="meterReads.electricEndRead" type="number" class="meter-input" placeholder="输入" @input="calculateElectric" />
+                  <input v-model.number="meterReads.electricEndRead" type="number" class="meter-input" placeholder="输入" @input="onElectricInput" />
                 </div>
                 <div class="meter-row">
                   <span class="meter-label">用电量</span>
@@ -218,7 +224,7 @@
                 </div>
                 <div class="meter-row">
                   <span class="meter-label">本期读数</span>
-                  <input v-model.number="meterReads.waterEndRead" type="number" class="meter-input" placeholder="输入" @input="calculateWater" />
+                  <input v-model.number="meterReads.waterEndRead" type="number" class="meter-input" placeholder="输入" @input="onWaterInput" />
                 </div>
                 <div class="meter-row">
                   <span class="meter-label">用水量</span>
@@ -371,13 +377,167 @@
       </div>
     </div>
 
+    <!-- 编辑弹框 -->
+    <div v-if="showEditModal" class="modal-overlay" @click.self="showEditModal = false">
+      <div class="modal-content slide-in-bottom payment-modal-new">
+        <div class="modal-header">
+          <h2 class="modal-title">编辑缴费记录</h2>
+          <button class="btn-close ripple-effect" @click="showEditModal = false">✕</button>
+        </div>
+        <div class="detail-content modal-scroll">
+          <div class="detail-row">
+            <span class="detail-label">租户:</span>
+            <span class="detail-value">{{ selectedPayment?.tenant?.name }} - {{ selectedPayment?.tenant?.house?.title }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">缴费日期:</span>
+            <div @click="showEditDatePicker = true" class="selector-field">
+              <span>{{ editForm.paidAtText || '点击选择' }}</span>
+              <span class="selector-arrow">›</span>
+            </div>
+          </div>
+          
+          <!-- 编辑费用明细 -->
+          <div v-if="editForm.tenantId" class="fee-section">
+            <div class="section-title">费用明细（勾选需要缴费的项目）</div>
+            
+            <!-- 房租 -->
+            <div class="fee-item" :class="{ 'fee-selected': editFeeChecks.rent }">
+              <div class="fee-header" @click="toggleEditFee('rent')">
+                <label class="fee-check-large">
+                  <input type="checkbox" v-model="editFeeChecks.rent" @change="toggleEditFee('rent')" />
+                  <span class="checkmark-large"></span>
+                </label>
+                <span class="fee-name">🏠 房租</span>
+                <span v-if="editFeeChecks.rent" class="fee-amount-badge">¥{{ editFeeAmounts.rent || 0 }}</span>
+              </div>
+              <div v-if="editFeeChecks.rent" class="fee-input">
+                <span class="currency">¥</span>
+                <input v-model.number="editFeeAmounts.rent" type="number" placeholder="金额" @input="calculateEditTotal" />
+              </div>
+            </div>
+
+            <!-- 电费 -->
+            <div class="fee-item" :class="{ 'fee-selected': editFeeChecks.electric }">
+              <div class="fee-header" @click="toggleEditFee('electric')">
+                <label class="fee-check-large">
+                  <input type="checkbox" v-model="editFeeChecks.electric" @change="toggleEditFee('electric')" />
+                  <span class="checkmark-large"></span>
+                </label>
+                <span class="fee-name">⚡ 电费</span>
+                <span v-if="editFeeChecks.electric && editFeeAmounts.electric" class="fee-amount-badge">¥{{ editFeeAmounts.electric }}</span>
+              </div>
+              <div v-if="editFeeChecks.electric" class="fee-meter">
+                <div class="meter-row">
+                  <span class="meter-label">上期读数</span>
+                  <span class="meter-value">{{ editMeterReads.lastElectricEndRead || 0 }}</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">本期读数</span>
+                  <input v-model.number="editMeterReads.electricEndRead" type="number" class="meter-input" placeholder="输入" @input="calculateEditElectric" />
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">用电量</span>
+                  <span class="meter-value highlight">{{ editMeterReads.electricUsage || 0 }} 度</span>
+                </div>
+                <div class="meter-row total">
+                  <span class="meter-label">电费金额</span>
+                  <span class="meter-value price">¥{{ editFeeAmounts.electric || 0 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 水费 -->
+            <div class="fee-item" :class="{ 'fee-selected': editFeeChecks.water }">
+              <div class="fee-header" @click="toggleEditFee('water')">
+                <label class="fee-check-large">
+                  <input type="checkbox" v-model="editFeeChecks.water" @change="toggleEditFee('water')" />
+                  <span class="checkmark-large"></span>
+                </label>
+                <span class="fee-name">💧 水费</span>
+                <span v-if="editFeeChecks.water && editFeeAmounts.water" class="fee-amount-badge">¥{{ editFeeAmounts.water }}</span>
+              </div>
+              <div v-if="editFeeChecks.water" class="fee-meter">
+                <div class="meter-row">
+                  <span class="meter-label">上期读数</span>
+                  <span class="meter-value">{{ editMeterReads.lastWaterEndRead || 0 }}</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">本期读数</span>
+                  <input v-model.number="editMeterReads.waterEndRead" type="number" class="meter-input" placeholder="输入" @input="calculateEditWater" />
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">用水量</span>
+                  <span class="meter-value highlight">{{ editMeterReads.waterUsage || 0 }} 吨</span>
+                </div>
+                <div class="meter-row total">
+                  <span class="meter-label">水费金额</span>
+                  <span class="meter-value price">¥{{ editFeeAmounts.water || 0 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 其他费用 -->
+            <div class="fee-item" :class="{ 'fee-selected': editFeeChecks.other }">
+              <div class="fee-header" @click="toggleEditFee('other')">
+                <label class="fee-check-large">
+                  <input type="checkbox" v-model="editFeeChecks.other" @change="toggleEditFee('other')" />
+                  <span class="checkmark-large"></span>
+                </label>
+                <span class="fee-name">📝 其他费用</span>
+                <span v-if="editFeeChecks.other && editFeeAmounts.other" class="fee-amount-badge">¥{{ editFeeAmounts.other }}</span>
+              </div>
+              <div v-if="editFeeChecks.other" class="fee-other-content">
+                <div class="fee-input-row">
+                  <span class="currency">¥</span>
+                  <input v-model.number="editFeeAmounts.other" type="number" class="fee-amount-input" placeholder="金额" @input="calculateEditTotal" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 汇总 -->
+            <div class="summary-section">
+              <div class="summary-row total">
+                <span>费用合计</span>
+                <span class="summary-grand">¥{{ editCurrentTotal }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-row">
+            <span class="detail-label">备注:</span>
+            <textarea v-model="editForm.remark" class="edit-input" rows="2" placeholder="备注（选填）"></textarea>
+          </div>
+        </div>
+        <div class="detail-footer">
+          <button class="btn btn-secondary ripple-effect" @click="showEditModal = false">取消</button>
+          <button class="btn btn-primary ripple-effect" @click="confirmEdit">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑日期选择弹框 -->
+    <div v-if="showEditDatePicker" class="modal-overlay" @click.self="showEditDatePicker = false">
+      <div class="picker-content slide-in-bottom">
+        <div class="picker-header">
+          <button class="btn btn-outline btn-sm" @click="showEditDatePicker = false">取消</button>
+          <h3 class="picker-title">选择缴费时间</h3>
+          <button class="btn btn-primary btn-sm" @click="confirmEditDatePicker">确认</button>
+        </div>
+        <van-date-picker
+          v-model="editDatePickerValue"
+          :show-toolbar="false"
+        />
+      </div>
+    </div>
+
     <!-- 租户选择弹框 -->
     <div v-if="showTenantPicker" class="modal-overlay" @click.self="showTenantPicker = false">
       <div class="picker-content slide-in-bottom">
         <div class="picker-header">
-          <button class="btn-link" @click="showTenantPicker = false">取消</button>
+          <button class="btn btn-outline btn-sm" @click="showTenantPicker = false">取消</button>
           <h3 class="picker-title">选择租户</h3>
-          <button class="btn-link btn-primary" @click="confirmTenantWithSelection">确认</button>
+          <button class="btn btn-primary btn-sm" @click="confirmTenantWithSelection">确认</button>
         </div>
         <div class="picker-options">
           <div
@@ -401,9 +561,9 @@
     <div v-if="showTypePicker" class="modal-overlay" @click.self="showTypePicker = false">
       <div class="picker-content slide-in-bottom">
         <div class="picker-header">
-          <button class="btn-link" @click="showTypePicker = false">取消</button>
+          <button class="btn btn-outline btn-sm" @click="showTypePicker = false">取消</button>
           <h3 class="picker-title">选择类型</h3>
-          <button class="btn-link btn-primary" @click="confirmTypeWithSelection">确认</button>
+          <button class="btn btn-primary btn-sm" @click="confirmTypeWithSelection">确认</button>
         </div>
         <div class="picker-options">
           <div
@@ -440,7 +600,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { type TagType, showToast, showLoadingToast, closeToast } from 'vant'
+import { type TagType, showToast, showLoadingToast, closeToast, showDialog } from 'vant'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
@@ -557,6 +717,49 @@ const typesMap: Record<string, { label: string; tagType: TagType | 'default' }> 
 
 const selectedPayment = ref<any>(null)
 
+const showEditModal = ref(false)
+const showEditDatePicker = ref(false)
+const editForm = ref({
+  tenantId: null as number | null,
+  paidAt: '',
+  paidAtText: '',
+  remark: ''
+})
+
+const editFeeChecks = ref({
+  rent: false,
+  electric: false,
+  water: false,
+  other: false
+})
+
+const editFeeAmounts = ref({
+  rent: 0,
+  electric: 0,
+  water: 0,
+  other: 0
+})
+
+const editMeterReads = ref({
+  lastElectricEndRead: 0,
+  lastWaterEndRead: 0,
+  electricEndRead: 0,
+  waterEndRead: 0,
+  electricUsage: 0,
+  waterUsage: 0
+})
+
+const editDatePickerValue = ref([dayjs().format('YYYY'), dayjs().format('MM'), dayjs().format('DD')])
+
+const editCurrentTotal = computed(() => {
+  let total = 0
+  if (editFeeChecks.value.rent) total += Number(editFeeAmounts.value.rent) || 0
+  if (editFeeChecks.value.electric) total += Number(editFeeAmounts.value.electric) || 0
+  if (editFeeChecks.value.water) total += Number(editFeeAmounts.value.water) || 0
+  if (editFeeChecks.value.other) total += Number(editFeeAmounts.value.other) || 0
+  return total.toFixed(2)
+})
+
 const getTypeLabel = (type: string) => typesMap[type]?.label || type || '-'
 
 const getItemClass = (type: string) => {
@@ -595,17 +798,13 @@ const filteredPayments = computed(() => {
   return filtered
 })
 
-const totalAmount = computed(() => {
-  return form.value.items.reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toFixed(2)
-})
-
 const currentTotal = computed(() => {
   let total = 0
   if (feeChecks.value.rent) total += Number(feeAmounts.value.rent) || 0
   if (feeChecks.value.electric) total += Number(feeAmounts.value.electric) || 0
   if (feeChecks.value.water) total += Number(feeAmounts.value.water) || 0
   if (feeChecks.value.other) total += Number(feeAmounts.value.other) || 0
-  return total.toFixed(2)
+  return total
 })
 
 const grandTotal = computed(() => {
@@ -613,7 +812,7 @@ const grandTotal = computed(() => {
 })
 
 const newBalance = computed(() => {
-  return (Number(grandTotal.value) - (form.value.actualPaid || 0)).toFixed(2)
+  return Number(grandTotal.value) - (form.value.actualPaid || 0)
 })
 
 const toggleFee = (type: string) => {
@@ -623,32 +822,50 @@ const toggleFee = (type: string) => {
   calculateTotal()
 }
 
-const calculateElectric = () => {
+// 输入时只计算，不校验
+const onElectricInput = () => {
   const start = meterReads.value.lastElectricEndRead || houseInfo.value.electricInitialRead || 0
-  const end = meterReads.value.electricEndRead || 0
-  if (end < start) {
-    showToast({ type: 'fail', message: `当前读数不能小于${start}` })
-    meterReads.value.electricEndRead = start
+  const end = meterReads.value.electricEndRead
+  
+  // 允许清空
+  if (end === null || end === undefined || isNaN(Number(end))) {
     meterReads.value.electricUsage = 0
-  } else {
-    meterReads.value.electricUsage = end - start
+    feeAmounts.value.electric = 0
+    return
   }
-  feeAmounts.value.electric = (meterReads.value.electricUsage * (houseInfo.value.electricRate || 1)).toFixed(2)
-  calculateTotal()
+  
+  const endNum = Number(end)
+  if (isNaN(endNum)) {
+    meterReads.value.electricUsage = 0
+    feeAmounts.value.electric = 0
+    return
+  }
+  
+  meterReads.value.electricUsage = endNum - start
+  feeAmounts.value.electric = Number((meterReads.value.electricUsage * (houseInfo.value.electricRate || 1)).toFixed(2))
 }
 
-const calculateWater = () => {
+// 输入时只计算，不校验
+const onWaterInput = () => {
   const start = meterReads.value.lastWaterEndRead || houseInfo.value.waterInitialRead || 0
-  const end = meterReads.value.waterEndRead || 0
-  if (end < start) {
-    showToast({ type: 'fail', message: `当前读数不能小于${start}` })
-    meterReads.value.waterEndRead = start
+  const end = meterReads.value.waterEndRead
+  
+  // 允许清空
+  if (end === null || end === undefined || isNaN(Number(end))) {
     meterReads.value.waterUsage = 0
-  } else {
-    meterReads.value.waterUsage = end - start
+    feeAmounts.value.water = 0
+    return
   }
-  feeAmounts.value.water = (meterReads.value.waterUsage * (houseInfo.value.waterRate || 3)).toFixed(2)
-  calculateTotal()
+  
+  const endNum = Number(end)
+  if (isNaN(endNum)) {
+    meterReads.value.waterUsage = 0
+    feeAmounts.value.water = 0
+    return
+  }
+  
+  meterReads.value.waterUsage = endNum - start
+  feeAmounts.value.water = Number((meterReads.value.waterUsage * (houseInfo.value.waterRate || 3)).toFixed(2))
 }
 
 const calculateTotal = () => {
@@ -697,53 +914,6 @@ const fetchTenants = async () => {
 
 const closeModal = () => {
   showModal.value = false
-}
-
-const activeTypes = computed(() => form.value.items.filter(i => i.type).map(i => i.type))
-
-const toggleTypeQuick = async (type: string) => {
-  const existingIndex = form.value.items.findIndex(i => i.type === type)
-  if (existingIndex > -1) {
-    form.value.items.splice(existingIndex, 1)
-    return
-  }
-  
-  const newItem: PaymentFormItem = {
-    type,
-    typeText: getTypeLabel(type),
-    amount: 0,
-    electricStartRead: 0,
-    electricEndRead: 0,
-    electricUsage: 0,
-    electricRate: 0,
-    waterStartRead: 0,
-    waterEndRead: 0,
-    waterUsage: 0,
-    waterRate: 0
-  }
-  
-  if (form.value.tenantId) {
-    const tenant = tenants.value.find((t: any) => t.id === form.value.tenantId)
-    if (tenant?.house?.id) {
-      try {
-        const house = await housesApi.getByIdWithLastRead(tenant.house.id) as any
-        if (type === 'ELECTRIC') {
-          newItem.electricStartRead = house.lastElectricEndRead || house.electricInitialRead || 0
-          newItem.electricRate = house.electricRate || 0
-        } else if (type === 'WATER') {
-          newItem.waterStartRead = house.lastWaterEndRead || house.waterInitialRead || 0
-          newItem.waterRate = house.waterRate || 0
-        }
-      } catch (e) { console.error(e) }
-    }
-  }
-  
-  form.value.items.push(newItem)
-}
-
-const removeItemQuick = (type: string) => {
-  const index = form.value.items.findIndex(i => i.type === type)
-  if (index > -1) form.value.items.splice(index, 1)
 }
 
 const clearTenantFilter = () => {
@@ -859,54 +1029,101 @@ const confirmDatePicker = () => {
   showDatePicker.value = false
 }
 
-const calculateElectricFee = (index: number) => {
-  const item = form.value.items[index]
-  const start = Number(item.electricStartRead) || 0
-  const end = Number(item.electricEndRead) || 0
-  item.electricUsage = end > start ? end - start : 0
-  // 如果有单价，自动计算金额
-  if (item.electricRate && item.electricRate > 0) {
-    item.amount = item.electricUsage * item.electricRate
-  }
-}
-
-const calculateWaterFee = (index: number) => {
-  const item = form.value.items[index]
-  const start = Number(item.waterStartRead) || 0
-  const end = Number(item.waterEndRead) || 0
-  item.waterUsage = end > start ? end - start : 0
-  // 如果有单价，自动计算金额
-  if (item.waterRate && item.waterRate > 0) {
-    item.amount = item.waterUsage * item.waterRate
-  }
-}
-
 const handleSave = async () => {
-  if (!form.value.tenantId || form.value.items.length === 0 || !form.value.items[0].type || form.value.items[0].amount <= 0) {
-    showToast({ type: 'fail', message: '请填写必填项' })
+  console.log('handleSave called', {
+    tenantId: form.value.tenantId,
+    currentTotal: currentTotal.value,
+    feeChecks: feeChecks.value,
+    meterReads: meterReads.value,
+    feeAmounts: feeAmounts.value
+  })
+  
+  // 验证水电读数
+  if (feeChecks.value.electric) {
+    const start = meterReads.value.lastElectricEndRead || houseInfo.value.electricInitialRead || 0
+    const end = meterReads.value.electricEndRead
+    if (end === null || end === undefined) {
+      showToast({ type: 'fail', message: '请输入电费本期读数' })
+      return
+    }
+    const endNum = Number(end)
+    if (isNaN(endNum) || endNum < start) {
+      showToast({ type: 'fail', message: `电费读数无效，当前读数不能小于${start}` })
+      return
+    }
+  }
+  
+  if (feeChecks.value.water) {
+    const start = meterReads.value.lastWaterEndRead || houseInfo.value.waterInitialRead || 0
+    const end = meterReads.value.waterEndRead
+    if (end === null || end === undefined) {
+      showToast({ type: 'fail', message: '请输入水费本期读数' })
+      return
+    }
+    const endNum = Number(end)
+    if (isNaN(endNum) || endNum < start) {
+      showToast({ type: 'fail', message: `水费读数无效，当前读数不能小于${start}` })
+      return
+    }
+  }
+  
+  if (!form.value.tenantId || currentTotal.value <= 0) {
+    showToast({ type: 'fail', message: '请选择租户并勾选至少一项费用' })
     return
   }
+  
   showLoadingToast({ message: '保存中...', forbidClick: true, duration: 0 })
   try {
-    const items = form.value.items
-      .filter(item => item.type)
-      .map(item => ({
-        type: item.type as 'RENT' | 'WATER' | 'ELECTRIC' | 'OTHER',
-        amount: Number(item.amount),
-        electricStartRead: item.type === 'ELECTRIC' ? Number(item.electricStartRead) || 0 : undefined,
-        electricEndRead: item.type === 'ELECTRIC' ? Number(item.electricEndRead) || 0 : undefined,
-        electricUsage: item.type === 'ELECTRIC' ? Number(item.electricUsage) : undefined,
-        waterStartRead: item.type === 'WATER' ? Number(item.waterStartRead) || 0 : undefined,
-        waterEndRead: item.type === 'WATER' ? Number(item.waterEndRead) || 0 : undefined,
-        waterUsage: item.type === 'WATER' ? Number(item.waterUsage) : undefined
-      }))
+    // 构建items数组
+    const items: any[] = []
+    
+    if (feeChecks.value.rent) {
+      items.push({
+        type: 'RENT',
+        amount: Number(feeAmounts.value.rent) || 0
+      })
+    }
+    
+    if (feeChecks.value.electric) {
+      const start = meterReads.value.lastElectricEndRead || houseInfo.value.electricInitialRead || 0
+      const end = Number(meterReads.value.electricEndRead) || 0
+      items.push({
+        type: 'ELECTRIC',
+        amount: Number(feeAmounts.value.electric) || 0,
+        electricStartRead: start,
+        electricEndRead: end,
+        electricUsage: meterReads.value.electricUsage || 0
+      })
+    }
+    
+    if (feeChecks.value.water) {
+      const start = meterReads.value.lastWaterEndRead || houseInfo.value.waterInitialRead || 0
+      const end = Number(meterReads.value.waterEndRead) || 0
+      items.push({
+        type: 'WATER',
+        amount: Number(feeAmounts.value.water) || 0,
+        waterStartRead: start,
+        waterEndRead: end,
+        waterUsage: meterReads.value.waterUsage || 0
+      })
+    }
+    
+    if (feeChecks.value.other) {
+      items.push({
+        type: 'OTHER',
+        amount: Number(feeAmounts.value.other) || 0
+      })
+    }
+
+    // 同步更新 form.items
+    form.value.items = items;
 
     await paymentsApi.create({
       tenantId: form.value.tenantId!,
       items,
       paidAt: form.value.paidAt,
       remark: form.value.remark,
-      actualPaid: form.value.actualPaid || Number(totalAmount.value)
+      actualPaid: form.value.actualPaid || currentTotal.value
     })
     closeToast()
     showToast({ type: 'success', message: '添加成功' })
@@ -915,6 +1132,236 @@ const handleSave = async () => {
   } catch (error: any) {
     closeToast()
     showToast({ type: 'fail', message: error.response?.data?.message || '添加失败' })
+  }
+}
+
+const handleEdit = async (payment: any) => {
+  selectedPayment.value = payment
+  
+  // 加载完整的缴费记录详情
+  try {
+    const fullPayment = await paymentsApi.getById(payment.id) as any
+    selectedPayment.value = fullPayment
+    
+    editForm.value = {
+      tenantId: fullPayment.tenantId,
+      paidAt: fullPayment.paidAt,
+      paidAtText: dayjs(fullPayment.paidAt).format('YYYY-MM-DD'),
+      remark: fullPayment.remark || ''
+    }
+    
+    // 初始化日期选择器
+    const paidDate = dayjs(fullPayment.paidAt)
+    editDatePickerValue.value = [String(paidDate.year()), String(paidDate.month() + 1).padStart(2, '0'), String(paidDate.date()).padStart(2, '0')]
+    
+    // 解析费用项目
+    editFeeChecks.value = { rent: false, electric: false, water: false, other: false }
+    editFeeAmounts.value = { rent: 0, electric: 0, water: 0, other: 0 }
+    editMeterReads.value = { lastElectricEndRead: 0, lastWaterEndRead: 0, electricEndRead: 0, waterEndRead: 0, electricUsage: 0, waterUsage: 0 }
+    
+    for (const item of fullPayment.items || []) {
+      if (item.type === 'RENT') {
+        editFeeChecks.value.rent = true
+        editFeeAmounts.value.rent = item.amount
+      } else if (item.type === 'ELECTRIC') {
+        editFeeChecks.value.electric = true
+        editFeeAmounts.value.electric = item.amount
+        editMeterReads.value.lastElectricEndRead = item.electricStartRead || 0
+        editMeterReads.value.electricEndRead = item.electricEndRead || 0
+        editMeterReads.value.electricUsage = item.electricUsage || 0
+      } else if (item.type === 'WATER') {
+        editFeeChecks.value.water = true
+        editFeeAmounts.value.water = item.amount
+        editMeterReads.value.lastWaterEndRead = item.waterStartRead || 0
+        editMeterReads.value.waterEndRead = item.waterEndRead || 0
+        editMeterReads.value.waterUsage = item.waterUsage || 0
+      } else if (item.type === 'OTHER') {
+        editFeeChecks.value.other = true
+        editFeeAmounts.value.other = item.amount
+      }
+    }
+    
+    // 获取上次水电表读数（用于验证）
+    try {
+      const lastReads = await tenantsApi.getLastMeterReads(fullPayment.tenantId) as any
+      // 只有在没有电表/水表读数时才使用上期读数
+      if (editMeterReads.value.electricEndRead === 0) {
+        editMeterReads.value.lastElectricEndRead = lastReads.lastElectricEndRead || 0
+      }
+      if (editMeterReads.value.waterEndRead === 0) {
+        editMeterReads.value.lastWaterEndRead = lastReads.lastWaterEndRead || 0
+      }
+    } catch (error) {
+      console.error('获取上次读数失败', error)
+    }
+    
+    showEditModal.value = true
+  } catch (error) {
+    showToast({ type: 'fail', message: '获取详情失败' })
+  }
+}
+
+const toggleEditFee = (_type: string) => {
+  // 切换时不自动填充金额，保持原值
+}
+
+const calculateEditElectric = () => {
+  const start = editMeterReads.value.lastElectricEndRead || 0
+  const end = editMeterReads.value.electricEndRead
+  
+  if (end === null || end === undefined || isNaN(Number(end)) || Number(end) === 0) {
+    editMeterReads.value.electricUsage = 0
+    editFeeAmounts.value.electric = 0
+    return
+  }
+  
+  const endNum = Number(end)
+  if (endNum < start) {
+    showToast({ type: 'fail', message: `当前读数 ${endNum} 小于上期读数 ${start}，请检查输入` })
+    editMeterReads.value.electricUsage = 0
+    editFeeAmounts.value.electric = 0
+  } else {
+    editMeterReads.value.electricUsage = endNum - start
+    editFeeAmounts.value.electric = Number((editMeterReads.value.electricUsage).toFixed(2))
+  }
+}
+
+const calculateEditWater = () => {
+  const start = editMeterReads.value.lastWaterEndRead || 0
+  const end = editMeterReads.value.waterEndRead
+  
+  if (end === null || end === undefined || isNaN(Number(end)) || Number(end) === 0) {
+    editMeterReads.value.waterUsage = 0
+    editFeeAmounts.value.water = 0
+    return
+  }
+  
+  const endNum = Number(end)
+  if (endNum < start) {
+    showToast({ type: 'fail', message: `当前读数 ${endNum} 小于上期读数 ${start}，请检查输入` })
+    editMeterReads.value.waterUsage = 0
+    editFeeAmounts.value.water = 0
+  } else {
+    editMeterReads.value.waterUsage = endNum - start
+    editFeeAmounts.value.water = Number((editMeterReads.value.waterUsage).toFixed(2))
+  }
+}
+
+const calculateEditTotal = () => {
+  // 触发重新计算
+}
+
+const confirmEditDatePicker = () => {
+  const date = dayjs(editDatePickerValue.value.join('-'))
+  editForm.value.paidAt = date.toISOString()
+  editForm.value.paidAtText = date.format('YYYY-MM-DD')
+  showEditDatePicker.value = false
+}
+
+const handleDelete = async (payment: any) => {
+  try {
+    const result = await showDialog({
+      title: '确认删除',
+      message: `确定要删除 "${payment.tenant?.name}" 的缴费记录吗？`,
+      showCancelButton: true,
+      confirmButtonText: '删除',
+      cancelButtonText: '取消',
+      allowEscapeKey: true
+    })
+    
+    if (result === 'confirm') {
+      await paymentsApi.delete(payment.id)
+      showToast({ type: 'success', message: '删除成功' })
+      fetchPayments()
+    }
+  } catch (error: any) {
+    if (error.message !== '取消操作') {
+      showToast({ type: 'fail', message: error.response?.data?.message || '删除失败' })
+    }
+  }
+}
+
+const confirmEdit = async () => {
+  if (!selectedPayment.value) return
+  
+  // 验证水电读数
+  if (editFeeChecks.value.electric && editMeterReads.value.electricEndRead) {
+    const start = editMeterReads.value.lastElectricEndRead || 0
+    const end = editMeterReads.value.electricEndRead
+    if (Number(end) < start) {
+      showToast({ type: 'fail', message: `电费读数无效，当前读数不能小于${start}` })
+      return
+    }
+  }
+  
+  if (editFeeChecks.value.water && editMeterReads.value.waterEndRead) {
+    const start = editMeterReads.value.lastWaterEndRead || 0
+    const end = editMeterReads.value.waterEndRead
+    if (Number(end) < start) {
+      showToast({ type: 'fail', message: `水费读数无效，当前读数不能小于${start}` })
+      return
+    }
+  }
+  
+  try {
+    const items: any[] = []
+    
+    if (editFeeChecks.value.rent) {
+      items.push({
+        type: 'RENT',
+        amount: Number(editFeeAmounts.value.rent) || 0
+      })
+    }
+    
+    if (editFeeChecks.value.electric) {
+      const start = editMeterReads.value.lastElectricEndRead || 0
+      const end = Number(editMeterReads.value.electricEndRead) || 0
+      items.push({
+        type: 'ELECTRIC',
+        amount: Number(editFeeAmounts.value.electric) || 0,
+        electricStartRead: start,
+        electricEndRead: end,
+        electricUsage: editMeterReads.value.electricUsage || 0
+      })
+    }
+    
+    if (editFeeChecks.value.water) {
+      const start = editMeterReads.value.lastWaterEndRead || 0
+      const end = Number(editMeterReads.value.waterEndRead) || 0
+      items.push({
+        type: 'WATER',
+        amount: Number(editFeeAmounts.value.water) || 0,
+        waterStartRead: start,
+        waterEndRead: end,
+        waterUsage: editMeterReads.value.waterUsage || 0
+      })
+    }
+    
+    if (editFeeChecks.value.other) {
+      items.push({
+        type: 'OTHER',
+        amount: Number(editFeeAmounts.value.other) || 0
+      })
+    }
+    
+    if (items.length === 0) {
+      showToast({ type: 'fail', message: '请至少选择一个缴费项目' })
+      return
+    }
+    
+    showLoadingToast({ message: '保存中...', forbidClick: true, duration: 0 })
+    await paymentsApi.update(selectedPayment.value.id, {
+      paidAt: editForm.value.paidAt,
+      remark: editForm.value.remark,
+      items
+    })
+    closeToast()
+    showToast({ type: 'success', message: '更新成功' })
+    showEditModal.value = false
+    fetchPayments()
+  } catch (error: any) {
+    closeToast()
+    showToast({ type: 'fail', message: error.response?.data?.message || '更新失败' })
   }
 }
 
@@ -1036,6 +1483,7 @@ onMounted(() => fetchPayments())
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 12px 24px;
   border: none;
@@ -1045,6 +1493,11 @@ onMounted(() => fetchPayments())
   cursor: pointer;
   transition: var(--transition);
   white-space: nowrap;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
 }
 
 .btn-primary {
@@ -1680,6 +2133,59 @@ onMounted(() => fetchPayments())
 .btn-delete:hover {
   opacity: 1;
   color: var(--accent);
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-page);
+}
+
+.btn-action {
+  padding: 6px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-edit {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.btn-edit:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-delete-action {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.btn-delete-action:hover {
+  background: var(--accent);
+  color: white;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  background: var(--bg-input);
+  color: var(--text-main);
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: var(--border-focus);
 }
 
 .empty-hint {
@@ -2404,18 +2910,26 @@ onMounted(() => fetchPayments())
 }
 
 .btn-outline {
-  flex: 1;
-  padding: 12px;
+  padding: 8px 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--bg-card);
+  background: transparent;
   color: var(--text-main);
-  font-size: 15px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
 }
 
 .btn-outline:active {
   background: var(--bg-input);
+  transform: scale(0.98);
 }
 
 .quick-total {

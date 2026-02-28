@@ -176,6 +176,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { showToast } from 'vant'
 import dayjs from 'dayjs'
 import { tenantsApi, housesApi } from '@/api'
 
@@ -266,20 +267,62 @@ const removeItem = (index: number) => {
 const calcElectric = (index: number) => {
   const item = form.value.items[index]
   const start = Number(item.electricStartRead) || 0
-  const end = Number(item.electricEndRead) || 0
-  item.electricUsage = end > start ? end - start : 0
-  if (item.electricRate > 0) {
-    item.amount = Math.round(item.electricUsage * item.electricRate * 100) / 100
+  const endRaw = item.electricEndRead
+  
+  // 允许清空
+  if (endRaw === null || endRaw === undefined || endRaw === '') {
+    item.electricUsage = 0
+    item.amount = 0
+    return
+  }
+  
+  const end = Number(endRaw)
+  if (isNaN(end)) {
+    item.electricUsage = 0
+    item.amount = 0
+    return
+  }
+  
+  if (end < start) {
+    showToast({ type: 'fail', message: `当前读数 ${end} 小于上期读数 ${start}，请检查输入` })
+    item.electricUsage = 0
+    item.amount = 0
+  } else {
+    item.electricUsage = end - start
+    if (item.electricRate > 0) {
+      item.amount = Math.round(item.electricUsage * item.electricRate * 100) / 100
+    }
   }
 }
 
 const calcWater = (index: number) => {
   const item = form.value.items[index]
   const start = Number(item.waterStartRead) || 0
-  const end = Number(item.waterEndRead) || 0
-  item.waterUsage = end > start ? end - start : 0
-  if (item.waterRate > 0) {
-    item.amount = Math.round(item.waterUsage * item.waterRate * 100) / 100
+  const endRaw = item.waterEndRead
+  
+  // 允许清空
+  if (endRaw === null || endRaw === undefined || endRaw === '') {
+    item.waterUsage = 0
+    item.amount = 0
+    return
+  }
+  
+  const end = Number(endRaw)
+  if (isNaN(end)) {
+    item.waterUsage = 0
+    item.amount = 0
+    return
+  }
+  
+  if (end < start) {
+    showToast({ type: 'fail', message: `当前读数 ${end} 小于上期读数 ${start}，请检查输入` })
+    item.waterUsage = 0
+    item.amount = 0
+  } else {
+    item.waterUsage = end - start
+    if (item.waterRate > 0) {
+      item.amount = Math.round(item.waterUsage * item.waterRate * 100) / 100
+    }
   }
 }
 
@@ -328,10 +371,32 @@ const onDateConfirm = ({ selectedValues }: any) => {
 
 const handleSubmit = async () => {
   if (!form.value.tenantId) {
+    showToast({ type: 'fail', message: '请选择租户' })
     return
   }
   if (form.value.items.length === 0) {
+    showToast({ type: 'fail', message: '请添加缴费项目' })
     return
+  }
+  
+  // 验证水电读数
+  for (const item of form.value.items) {
+    if (item.type === 'ELECTRIC') {
+      const start = Number(item.electricStartRead) || 0
+      const end = Number(item.electricEndRead) || 0
+      if (end < start) {
+        showToast({ type: 'fail', message: `电费读数无效，当前读数不能小于${start}` })
+        return
+      }
+    }
+    if (item.type === 'WATER') {
+      const start = Number(item.waterStartRead) || 0
+      const end = Number(item.waterEndRead) || 0
+      if (end < start) {
+        showToast({ type: 'fail', message: `水费读数无效，当前读数不能小于${start}` })
+        return
+      }
+    }
   }
   
   const items = form.value.items.map(item => ({

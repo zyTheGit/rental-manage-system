@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Query, Body, Param, UseGuards, Res, Header } from '@nestjs/common';
+import { Controller, Get, Post, Query, Body, Param, UseGuards, Res, Header, Patch, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto, GetUtilityStatsDto, VerifyShareDto } from './dto/payment.dto';
+import { CreatePaymentDto, UpdatePaymentDto, GetUtilityStatsDto, VerifyShareDto } from './dto/payment.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Response } from 'express';
 
@@ -105,5 +105,23 @@ export class PaymentsController {
   @ApiOperation({ summary: '创建缴费记录，支持多个缴费类型' })
   async create(@Body() createPaymentDto: CreatePaymentDto) {
     return this.paymentsService.create(createPaymentDto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', description: '缴费记录 ID' })
+  @ApiOperation({ summary: '更新缴费记录' })
+  async update(@Param('id') id: string, @Body() updatePaymentDto: UpdatePaymentDto) {
+    return this.paymentsService.update(+id, updatePaymentDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiParam({ name: 'id', description: '缴费记录 ID' })
+  @ApiOperation({ summary: '删除缴费记录' })
+  async remove(@Param('id') id: string) {
+    return this.paymentsService.remove(+id);
   }
 }

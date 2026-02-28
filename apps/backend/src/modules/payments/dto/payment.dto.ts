@@ -76,6 +76,26 @@ export class CreatePaymentDto {
   actualPaid?: number;
 }
 
+export class UpdatePaymentDto {
+  @IsDateString()
+  @IsOptional()
+  paidAt?: string;
+
+  @IsString()
+  @IsOptional()
+  remark?: string;
+
+  @IsNumber()
+  @IsOptional()
+  actualPaid?: number;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePaymentItemDto)
+  @IsOptional()
+  items?: CreatePaymentItemDto[];
+}
+
 export class GetUtilityStatsDto {
   @Type(() => Number)
   @IsNumber()
