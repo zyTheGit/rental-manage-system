@@ -128,46 +128,42 @@ export class TenantsService {
   async getLastMeterReads(id: number) {
     const tenant = await this.prisma.tenant.findUnique({
       where: { id },
-      include: {
-        house: true,
-        payments: {
-          where: {
-            items: {
-              some: {
-                type: { in: ['WATER', 'ELECTRIC'] },
-              },
-            },
-          },
-          orderBy: { paidAt: 'desc' },
-          take: 1,
-          include: {
-            items: {
-              where: {
-                type: { in: ['WATER', 'ELECTRIC'] },
-              },
-            },
-          },
-        },
-      },
+      include: { house: true },
     });
 
     if (!tenant) {
       throw new NotFoundException('租户不存在');
     }
 
+    // 获取默认初始读数
     let lastWaterEndRead = tenant.house?.waterInitialRead || 0;
     let lastElectricEndRead = tenant.house?.electricInitialRead || 0;
 
-    if (tenant.payments && tenant.payments.length > 0) {
-      const lastPayment = tenant.payments[0];
-      const electricItem = lastPayment.items.find((item) => item.type === 'ELECTRIC');
-      const waterItem = lastPayment.items.find((item) => item.type === 'WATER');
-      if (electricItem?.electricEndRead) {
-        lastElectricEndRead = electricItem.electricEndRead;
-      }
-      if (waterItem?.waterEndRead) {
-        lastWaterEndRead = waterItem.waterEndRead;
-      }
+    // 分别查询电费的最新记录
+    const lastElectricItem = await this.prisma.paymentItem.findFirst({
+      where: {
+        type: 'ELECTRIC',
+        payment: { tenantId: id },
+      },
+      orderBy: { payment: { paidAt: 'desc' } },
+      include: { payment: true },
+    });
+
+    // 分别查询水费的最新记录
+    const lastWaterItem = await this.prisma.paymentItem.findFirst({
+      where: {
+        type: 'WATER',
+        payment: { tenantId: id },
+      },
+      orderBy: { payment: { paidAt: 'desc' } },
+      include: { payment: true },
+    });
+
+    if (lastElectricItem?.electricEndRead) {
+      lastElectricEndRead = lastElectricItem.electricEndRead;
+    }
+    if (lastWaterItem?.waterEndRead) {
+      lastWaterEndRead = lastWaterItem.waterEndRead;
     }
 
     return {

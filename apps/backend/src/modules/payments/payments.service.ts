@@ -566,6 +566,48 @@ export class PaymentsService {
       where: { tenantId: payment.tenantId },
     });
 
+    // 获取删除后的最新一条电费记录
+    const lastElectricItem = await this.prisma.paymentItem.findFirst({
+      where: {
+        type: 'ELECTRIC',
+        payment: { tenantId: payment.tenantId },
+      },
+      orderBy: { payment: { paidAt: 'desc' } },
+      include: { payment: true },
+    });
+
+    // 获取删除后的最新一条水费记录
+    const lastWaterItem = await this.prisma.paymentItem.findFirst({
+      where: {
+        type: 'WATER',
+        payment: { tenantId: payment.tenantId },
+      },
+      orderBy: { payment: { paidAt: 'desc' } },
+      include: { payment: true },
+    });
+
+    // 更新租户的初始读数为删除后的最新记录
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: payment.tenantId },
+      include: { house: true },
+    });
+
+    if (tenant?.houseId) {
+      const updateData: any = {};
+      if (lastElectricItem?.electricEndRead) {
+        updateData.electricInitialRead = lastElectricItem.electricEndRead;
+      }
+      if (lastWaterItem?.waterEndRead) {
+        updateData.waterInitialRead = lastWaterItem.waterEndRead;
+      }
+      if (Object.keys(updateData).length > 0) {
+        await this.prisma.house.update({
+          where: { id: tenant.houseId },
+          data: updateData,
+        });
+      }
+    }
+
     return this.prisma.payment.delete({
       where: { id },
     });

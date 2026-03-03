@@ -8,7 +8,7 @@
   >
     <div class="modal-header">
       <h2 class="modal-title">{{ house ? '编辑房屋' : '添加房屋' }}</h2>
-      <button class="btn-close" @click="closeModal">✕</button>
+      <button class="btn-close" @click="handleClose">✕</button>
     </div>
 
     <van-form @submit="handleSubmit" ref="formRef" class="form-content">
@@ -109,9 +109,8 @@
       </van-cell-group>
 
       <div class="form-footer">
-        <van-button round block type="primary" native-type="submit" class="btn-submit">
-          保存
-        </van-button>
+        <button class="btn btn-secondary" @click="handleClose">取消</button>
+        <button class="btn btn-primary" native-type="submit">确认</button>
       </div>
     </van-form>
   </van-popup>
@@ -149,7 +148,8 @@ const form = ref({
   electricRate: 0
 })
 
-const closeModal = () => {
+const handleClose = () => {
+  emit('update:show', false)
   emit('close')
 }
 
@@ -233,24 +233,12 @@ watch(() => props.show, (show) => {
 }
 
 .btn-close {
-  width: 32px;
-  height: 32px;
-  padding: 0;
+  background: none;
   border: none;
-  background: var(--bg-input);
-  border-radius: var(--radius-sm);
-  font-size: 18px;
+  font-size: 20px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-close:hover {
-  background: var(--accent-light);
-  color: var(--accent);
+  padding: 4px;
 }
 
 .form-content {
@@ -290,13 +278,30 @@ watch(() => props.show, (show) => {
 }
 
 .form-footer {
+  display: flex;
+  gap: 12px;
   padding: 16px 24px 24px;
   background: var(--bg-card);
   border-top: 1px solid var(--border-light);
 }
 
-.btn-submit {
-  font-weight: 600;
-  padding: 12px;
+.btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--bg-input);
+  color: var(--text-main);
 }
 </style>

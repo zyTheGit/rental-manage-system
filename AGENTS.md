@@ -203,31 +203,108 @@ When a page exceeds 600 lines, extract components:
 5. **Empty data handling**: Provide fallback arrays for charts: `data || []`
 6. **Page file size**: Extract components when page exceeds 600 lines
 7. **Number conversion in computed**: Use `Number()` when calculating totals from strings
+8. **Horizontal scrolling**: Always use `overflow-x: hidden` and `box-sizing: border-box`
+9. **Modal height**: Use `max-height: 70vh` for modal body with `overflow-y: auto`
+10. **Select dropdown default**: Use empty string `""` instead of `null` for default select options
 
 ## Styling Guidelines
 
-**IMPORTANT**: For styling changes, use the `frontend-design` skill:
-- Run `skill frontend-design` before making significant UI/styling changes
-- Follow the skill's design thinking process for cohesive aesthetics
-- Use CSS variables from `@/styles/theme.css` consistently
+**IMPORTANT**: Maintain consistent styling across all pages. Reference existing pages for style patterns.
 
-**Checkbox and Interactive Elements:**
-- Use large, visible checkboxes (min 24px) for easy touch interaction
-- Add `cursor: pointer` to clickable elements
-- Provide visual feedback (border color change, background) on selection
-- Display selected values prominently (e.g., `fee-amount-badge`)
+### Mobile-First Design Principles
 
-**Mobile Form Layout:**
-- Avoid inline hints that overflow on small screens
-- Place hints on separate rows below inputs
-- Use `box-sizing: border-box` for inputs with 100% width
-- Ensure adequate touch targets (min 44px height)
+1. **No Horizontal Scrolling**: All pages must not have horizontal scrollbars on mobile
+   - Use `overflow-x: hidden` on containers
+   - Use `width: 100%` with `box-sizing: border-box` for all inputs
+   - Never use fixed widths that exceed viewport
 
-**Fee/Price Display:**
-- Show currency symbol (¥) before amounts
-- Use large font (24px+) for totals
-- Highlight computed values with primary color
-- Show reference prices in muted color with clear label
+2. **Modal/Popup Styling** (Reference: `ReminderModal.vue`):
+   ```vue
+   <van-popup position="bottom" round>
+     <div class="modal-header">
+       <h2 class="modal-title">标题</h2>
+       <button class="btn-close">✕</button>
+     </div>
+     <div class="modal-body">
+       <!-- Content with max-height: 70vh -->
+     </div>
+   </van-popup>
+   ```
+   - Header: Title + Close button (no extra buttons)
+   - Body: `max-height: 70vh; overflow-y: auto; overflow-x: hidden`
+   - Footer: Two buttons side by side
+
+3. **Picker/Selector Styling**:
+   - Header: Title on left, close button on right
+   - Options: Card-like with radio indicator
+   - Selected state: Border highlight + background color
+   ```css
+   .picker-option.active {
+     border-color: var(--primary);
+     background: var(--primary-light);
+   }
+   ```
+
+4. **Form Inputs**:
+   - Full width with proper padding
+   - `box-sizing: border-box` required
+   - Minimum touch target: 44px height
+   - Labels above or inline with proper spacing
+
+### CSS Variables (from @/styles/theme.css)
+
+```css
+/* Colors */
+--primary: #0F766E;
+--primary-light: #CCFBF1;
+--bg-page: #F8FAFC;
+--bg-card: #FFFFFF;
+--bg-input: #F1F5F9;
+--text-main: #1E293B;
+--text-secondary: #64748B;
+
+/* Spacing & Radius */
+--radius-md: 12px;
+--radius-lg: 16px;
+--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+```
+
+### Common Style Patterns
+
+**Form Row:**
+```css
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+```
+
+**Section Title:**
+```css
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 10px 16px;
+  background: var(--bg-input);
+}
+```
+
+**Checkbox Style:**
+- Minimum 24px for easy touch interaction
+- Clear visual feedback on selection
+- Use CSS variables for consistency
+
+### Before Making UI Changes
+
+1. Check existing similar components for patterns
+2. Ensure no horizontal scrolling on mobile
+3. Use theme CSS variables consistently
+4. Test on mobile viewport (375px width)
 
 ## Payment Modal Logic
 
@@ -242,18 +319,13 @@ const currentTotal = computed(() => {
   return total.toFixed(2)
 })
 
-// Meter calculations
-const calculateElectric = () => {
-  const start = meterReads.value.lastElectricEndRead || 0
-  const end = meterReads.value.electricEndRead || 0
-  if (end < start) {
-    showToast({ type: 'fail', message: `当前读数不能小于${start}` })
-    meterReads.value.electricEndRead = start
-    meterReads.value.electricUsage = 0
-  } else {
-    meterReads.value.electricUsage = end - start
+// Validation on submit (NOT real-time)
+const handleSave = () => {
+  if (feeChecks.electric && meterReads.electricEndRead < meterReads.lastElectricEndRead) {
+    showToast({ type: 'fail', message: '电费结束读数不能小于起始读数' })
+    return // Prevent submit
   }
-  feeAmounts.value.electric = (meterReads.value.electricUsage * houseInfo.value.electricRate).toFixed(2)
+  // ... continue with save
 }
 ```
 
@@ -262,7 +334,6 @@ const calculateElectric = () => {
 // When selecting tenant, auto-fill house info
 const selectTenant = async (tenant: any) => {
   form.value.tenantId = tenant.id
-  form.value.previousBalance = tenant.balance || 0
   
   // Fetch house config and last meter reads
   const house = await housesApi.getById(tenant.house.id)
@@ -277,3 +348,8 @@ const selectTenant = async (tenant: any) => {
   feeAmounts.value.rent = house.rent
 }
 ```
+
+**Meter Read Validation:**
+- Only validate on submit, not during input
+- Show error toast and prevent form submission
+- Start reads should be read-only (from last payment or initial config)
