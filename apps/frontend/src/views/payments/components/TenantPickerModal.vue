@@ -89,7 +89,8 @@ defineEmits<{
 .picker-options {
   max-height: 400px;
   overflow-y: auto;
-  padding: 0 16px 16px;
+  overflow-x: hidden;
+  padding: 16px 20px;
 }
 
 .picker-option {
@@ -100,10 +101,15 @@ defineEmits<{
   margin-bottom: 8px;
   cursor: pointer;
   border: 2px solid transparent;
+  transition: all 0.2s ease;
 }
 
 .picker-option:hover {
   background: var(--bg-input);
+}
+
+.picker-option:active {
+  transform: scale(0.98);
 }
 
 .picker-option.active {
@@ -118,11 +124,12 @@ defineEmits<{
   border: 2px solid var(--border-light);
   margin-right: 12px;
   flex-shrink: 0;
-  position: relative;
+  transition: all 0.2s ease;
 }
 
 .picker-option.active .option-radio {
   border-color: var(--primary);
+  position: relative;
 }
 
 .picker-option.active .option-radio::after {

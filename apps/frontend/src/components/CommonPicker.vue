@@ -114,10 +114,10 @@ const handleSelect = (value: any) => {
 }
 
 .option-radio {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border: 2px solid var(--border);
+  border: 2px solid var(--border-light);
   margin-right: 12px;
   flex-shrink: 0;
   transition: all 0.2s ease;

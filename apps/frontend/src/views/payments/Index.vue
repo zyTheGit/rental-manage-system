@@ -120,7 +120,7 @@ const exporting = ref(false);
 
 const filters = reactive({
   searchText: "",
-  type: null as string | null,
+  type: "" as string,
   startDate: "",
   endDate: "",
   tenantId: null as number | null,
@@ -244,7 +244,7 @@ const onDateConfirm = ({ selectedValues }: any) => {
 };
 
 const onTypeChange = (value: any) => {
-  filters.type = value || null;
+  filters.type = value;
 };
 
 const selectTenant = (tenant: any) => {

@@ -158,27 +158,14 @@
     </div>
 
     <!-- 租户选择器 -->
-    <van-popup v-model:show="showTenantPicker" position="bottom" round>
-      <div class="picker-header">
-        <span class="picker-title">选择租户</span>
-        <button class="btn-close" @click="showTenantPicker = false">✕</button>
-      </div>
-      <div class="picker-options">
-        <div
-          v-for="tenant in tenants"
-          :key="tenant.id"
-          class="picker-option"
-          :class="{ active: form.tenantId === tenant.id }"
-          @click="handleSelectTenant(tenant)"
-        >
-          <span class="option-radio"></span>
-          <div class="option-content">
-            <div class="option-title">{{ tenant.name }}</div>
-            <div class="option-subtitle">{{ tenant.house?.title || '' }} - {{ tenant.phone }}</div>
-          </div>
-        </div>
-      </div>
-    </van-popup>
+    <CommonPicker
+      :show="showTenantPicker"
+      title="选择租户"
+      :options="tenantOptions"
+      v-model="form.tenantId"
+      @update:show="showTenantPicker = $event"
+      @change="handleTenantChange"
+    />
 
     <!-- 日期选择器 -->
     <van-popup v-model:show="showDatePicker" position="bottom" round>
@@ -198,6 +185,7 @@ import { showToast } from "vant";
 import dayjs from "dayjs";
 import { tenantsApi, housesApi } from "@/api";
 import type { Tenant } from "@/api/tenants";
+import CommonPicker from "@/components/CommonPicker.vue";
 
 const props = defineProps<{
   show: boolean;
@@ -273,6 +261,14 @@ const currentTotalNum = computed(() => {
   return total;
 });
 
+const tenantOptions = computed(() => {
+  return props.tenants.map((tenant) => ({
+    value: tenant.id,
+    label: tenant.name,
+    subtitle: tenant.house?.title || "",
+  }));
+});
+
 const toggleFee = async (type: string) => {
   if (type === "rent" && feeChecks.rent) {
     feeAmounts.rent = houseInfo.rent || 0;
@@ -315,8 +311,10 @@ const calculateWater = () => {
   feeAmounts.water = Number((meterReads.waterUsage * houseInfo.waterRate).toFixed(2));
 };
 
-const handleSelectTenant = async (tenant: any) => {
-  form.tenantId = tenant.id;
+const handleTenantChange = async (tenantId: number) => {
+  const tenant = props.tenants.find((t) => t.id === tenantId);
+  if (!tenant) return;
+
   tenantText.value = `${tenant.name} - ${tenant.house?.title || ""}`;
 
   feeChecks.rent = false;
@@ -352,8 +350,6 @@ const handleSelectTenant = async (tenant: any) => {
   } catch (error) {
     console.error("获取上次读数失败", error);
   }
-
-  showTenantPicker.value = false;
 };
 
 const confirmDate = () => {

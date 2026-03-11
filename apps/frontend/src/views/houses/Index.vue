@@ -131,13 +131,13 @@ const houses = ref<any[]>([]);
 const loading = ref(false);
 const exporting = ref(false);
 const searchText = ref("");
-const filterStatus = ref<string | null>(null);
+const filterStatus = ref<string>("");
 const showModal = ref(false);
 const editingHouse = ref<any>(null);
 const showStatusPicker = ref(false);
 
 const statusOptions = [
-  { value: null, label: "全部状态" },
+  { value: "", label: "全部状态" },
   { value: "AVAILABLE", label: "空置" },
   { value: "RENTED", label: "已租" },
 ];
