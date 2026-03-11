@@ -1,7 +1,24 @@
-import { Controller, Get, Post, Query, Body, Param, UseGuards, Res, Header, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Body,
+  Param,
+  UseGuards,
+  Res,
+  Header,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto, UpdatePaymentDto, GetUtilityStatsDto, VerifyShareDto } from './dto/payment.dto';
+import {
+  CreatePaymentDto,
+  UpdatePaymentDto,
+  GetUtilityStatsDto,
+  VerifyShareDto,
+} from './dto/payment.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { Response } from 'express';
 

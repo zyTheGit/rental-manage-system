@@ -129,6 +129,7 @@ import { useRoute } from 'vue-router'
 import { showToast } from 'vant'
 import dayjs from 'dayjs'
 import request from '@/utils/request'
+import { sum } from '@/utils/decimal'
 
 const route = useRoute()
 const loading = ref(true)
@@ -154,7 +155,7 @@ const formatAmount = (amount: number) => Number(amount || 0).toFixed(2)
 
 const totalAmount = computed(() => {
   if (!shareData.value?.payments) return '0.00'
-  const total = shareData.value.payments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0)
+  const total = sum(...shareData.value.payments.map((p: any) => p.amount || 0))
   return total.toFixed(2)
 })
 

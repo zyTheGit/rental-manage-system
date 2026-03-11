@@ -86,7 +86,7 @@ const handleSelect = (value: any) => {
   max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 20px;
+  padding: 24px 20px 16px;
 }
 
 .picker-option {

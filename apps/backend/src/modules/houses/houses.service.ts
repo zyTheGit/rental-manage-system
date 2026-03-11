@@ -41,10 +41,7 @@ export class HousesService {
       include: {
         tenants: {
           where: {
-            OR: [
-              { status: 'RENTED' },
-              { status: 'CHECKED_OUT' },
-            ],
+            OR: [{ status: 'RENTED' }, { status: 'CHECKED_OUT' }],
           },
           orderBy: { createdAt: 'desc' },
           take: 1,

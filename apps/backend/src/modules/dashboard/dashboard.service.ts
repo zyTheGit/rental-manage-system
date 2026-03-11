@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { DecimalUtil } from '../../common/utils/decimal.util';
 
 @Injectable()
 export class DashboardService {
@@ -26,7 +27,7 @@ export class DashboardService {
       },
     });
 
-    const monthIncome = monthlyPayments.reduce((sum, p) => sum + p.amount, 0);
+    const monthIncome = DecimalUtil.sumArray(monthlyPayments, (p) => p.amount);
 
     const yearlyPayments = await this.prisma.payment.findMany({
       where: {
@@ -39,7 +40,7 @@ export class DashboardService {
       },
     });
 
-    const yearIncome = yearlyPayments.reduce((sum, p) => sum + p.amount, 0);
+    const yearIncome = DecimalUtil.sumArray(yearlyPayments, (p) => p.amount);
 
     const byMonth = Array.from({ length: 12 }, (_, i) => {
       const startDate = new Date(now.getFullYear(), i, 1);
@@ -56,7 +57,7 @@ export class DashboardService {
         })
         .then((payments) => ({
           month: `${i + 1}月`,
-          amount: payments.reduce((sum, p) => sum + p.amount, 0),
+          amount: DecimalUtil.sumArray(payments, (p) => p.amount),
         }));
     });
 
@@ -65,7 +66,7 @@ export class DashboardService {
     const byType: Record<string, number> = {};
     yearlyPayments.forEach((p) => {
       p.items.forEach((item) => {
-        byType[item.type] = (byType[item.type] || 0) + item.amount;
+        byType[item.type] = DecimalUtil.sum(byType[item.type] || 0, item.amount);
       });
     });
 
@@ -75,7 +76,7 @@ export class DashboardService {
     }));
 
     return {
-      totalIncome: yearlyPayments.reduce((sum, p) => sum + p.amount, 0),
+      totalIncome: DecimalUtil.sumArray(yearlyPayments, (p) => p.amount),
       monthIncome,
       yearIncome,
       occupancyRate,

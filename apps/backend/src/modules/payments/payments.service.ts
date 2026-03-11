@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePaymentDto, UpdatePaymentDto, GetUtilityStatsDto } from './dto/payment.dto';
+import { DecimalUtil } from '../../common/utils/decimal.util';
 
 @Injectable()
 export class PaymentsService {
@@ -147,7 +148,7 @@ export class PaymentsService {
     const year = paidAt.getFullYear();
     const month = paidAt.getMonth() + 1;
 
-    const totalAmount = createPaymentDto.items.reduce((sum, item) => sum + item.amount, 0);
+    const totalAmount = DecimalUtil.sumArray(createPaymentDto.items, (item) => item.amount);
 
     const payment = await this.prisma.payment.create({
       data: {
@@ -168,7 +169,7 @@ export class PaymentsService {
 
     const previousBalance = tenant.balance || 0;
     const actualPaid = createPaymentDto.actualPaid || totalAmount;
-    const newBalance = previousBalance + totalAmount - actualPaid;
+    const newBalance = DecimalUtil.calculateBalance(previousBalance, totalAmount, actualPaid);
 
     await this.prisma.tenant.update({
       where: { id: createPaymentDto.tenantId },
@@ -214,7 +215,7 @@ export class PaymentsService {
 
       if (electricEndRead > 0) {
         updateData.electricEndRead = electricEndRead;
-        updateData.electricUsage = existing.electricUsage + electricUsage;
+        updateData.electricUsage = DecimalUtil.sum(existing.electricUsage, electricUsage);
         if (
           existing.electricStartRead === 0 ||
           (electricStartRead > 0 && electricStartRead < existing.electricStartRead)
@@ -225,7 +226,7 @@ export class PaymentsService {
 
       if (waterEndRead > 0) {
         updateData.waterEndRead = waterEndRead;
-        updateData.waterUsage = existing.waterUsage + waterUsage;
+        updateData.waterUsage = DecimalUtil.sum(existing.waterUsage, waterUsage);
         if (
           existing.waterStartRead === 0 ||
           (waterStartRead > 0 && waterStartRead < existing.waterStartRead)
@@ -275,12 +276,12 @@ export class PaymentsService {
       },
     });
 
-    const totalIncome = payments.reduce((sum, p) => sum + p.amount, 0);
+    const totalIncome = DecimalUtil.sumArray(payments, (p) => p.amount);
 
     const byType: Record<string, number> = {};
     payments.forEach((p) => {
       p.items.forEach((item) => {
-        byType[item.type] = (byType[item.type] || 0) + item.amount;
+        byType[item.type] = DecimalUtil.sum(byType[item.type] || 0, item.amount);
       });
     });
 
@@ -311,12 +312,12 @@ export class PaymentsService {
       },
     });
 
-    const totalIncome = payments.reduce((sum, p) => sum + p.amount, 0);
+    const totalIncome = DecimalUtil.sumArray(payments, (p) => p.amount);
 
     const byType: Record<string, number> = {};
     payments.forEach((p) => {
       p.items.forEach((item) => {
-        byType[item.type] = (byType[item.type] || 0) + item.amount;
+        byType[item.type] = DecimalUtil.sum(byType[item.type] || 0, item.amount);
       });
     });
 
@@ -329,7 +330,7 @@ export class PaymentsService {
       const monthPayments = payments.filter((p) => new Date(p.paidAt).getMonth() === i);
       return {
         month: `${i + 1}月`,
-        amount: monthPayments.reduce((sum, p) => sum + p.amount, 0),
+        amount: DecimalUtil.sumArray(monthPayments, (p) => p.amount),
       };
     });
 
@@ -368,13 +369,13 @@ export class PaymentsService {
     });
 
     if (!params?.tenantId && params?.year) {
-      const totalElectricUsage = stats.reduce((sum, s) => sum + s.electricUsage, 0);
-      const totalWaterUsage = stats.reduce((sum, s) => sum + s.waterUsage, 0);
+      const totalElectricUsage = DecimalUtil.sumArray(stats, (s) => s.electricUsage);
+      const totalWaterUsage = DecimalUtil.sumArray(stats, (s) => s.waterUsage);
 
       const monthlyStats = Array.from({ length: 12 }, (_, i) => {
         const monthStats = stats.filter((s) => s.month === i + 1);
-        const electricUsage = monthStats.reduce((sum, s) => sum + s.electricUsage, 0);
-        const waterUsage = monthStats.reduce((sum, s) => sum + s.waterUsage, 0);
+        const electricUsage = DecimalUtil.sumArray(monthStats, (s) => s.electricUsage);
+        const waterUsage = DecimalUtil.sumArray(monthStats, (s) => s.waterUsage);
         return {
           month: `${i + 1}月`,
           electricUsage,
@@ -416,8 +417,8 @@ export class PaymentsService {
       };
     });
 
-    const totalElectricUsage = stats.reduce((sum, s) => sum + s.electricUsage, 0);
-    const totalWaterUsage = stats.reduce((sum, s) => sum + s.waterUsage, 0);
+    const totalElectricUsage = DecimalUtil.sumArray(stats, (s) => s.electricUsage);
+    const totalWaterUsage = DecimalUtil.sumArray(stats, (s) => s.waterUsage);
 
     return {
       tenantId,
@@ -451,7 +452,7 @@ export class PaymentsService {
       where: { id },
       include: {
         items: true,
-        tenant: true
+        tenant: true,
       },
     });
 
@@ -486,22 +487,34 @@ export class PaymentsService {
       const paidAt = updatePaymentDto.paidAt ? new Date(updatePaymentDto.paidAt) : payment.paidAt;
       const year = paidAt.getFullYear();
       const month = paidAt.getMonth() + 1;
-      
+
       // 先减少旧的统计
       for (const oldItem of payment.items) {
         if (oldItem.type === 'ELECTRIC' && oldItem.electricUsage) {
-          await this.decrementUtilityStats(payment.tenantId, year, month, 'electric', oldItem.electricUsage);
+          await this.decrementUtilityStats(
+            payment.tenantId,
+            year,
+            month,
+            'electric',
+            oldItem.electricUsage,
+          );
         }
         if (oldItem.type === 'WATER' && oldItem.waterUsage) {
-          await this.decrementUtilityStats(payment.tenantId, year, month, 'water', oldItem.waterUsage);
+          await this.decrementUtilityStats(
+            payment.tenantId,
+            year,
+            month,
+            'water',
+            oldItem.waterUsage,
+          );
         }
       }
-      
+
       // 添加新的统计
       await this.updateUtilityStats(payment.tenantId, year, month, updatePaymentDto.items);
     }
 
-    const totalAmount = updatePaymentDto.items 
+    const totalAmount = updatePaymentDto.items
       ? updatePaymentDto.items.reduce((sum, item) => sum + item.amount, 0)
       : payment.amount;
 
@@ -521,7 +534,13 @@ export class PaymentsService {
     });
   }
 
-  private async decrementUtilityStats(tenantId: number, year: number, month: number, type: 'electric' | 'water', usage: number) {
+  private async decrementUtilityStats(
+    tenantId: number,
+    year: number,
+    month: number,
+    type: 'electric' | 'water',
+    usage: number,
+  ) {
     const existing = await this.prisma.utilityStats.findUnique({
       where: {
         tenantId_year_month: {

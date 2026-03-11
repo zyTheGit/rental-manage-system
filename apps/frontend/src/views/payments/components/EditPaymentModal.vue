@@ -145,6 +145,7 @@ import { ref, reactive, computed, watch } from 'vue'
 import { showToast } from 'vant'
 import dayjs from 'dayjs'
 import type { Payment } from '@/api/payments'
+import { sum, subtract, multiply } from '@/utils/decimal'
 
 const props = defineProps<{
   payment: Payment | null
@@ -168,12 +169,12 @@ const meterReads = reactive({
 })
 
 const currentTotal = computed(() => {
-  let total = 0
-  if (feeChecks.rent) total += Number(feeAmounts.rent) || 0
-  if (feeChecks.electric) total += Number(feeAmounts.electric) || 0
-  if (feeChecks.water) total += Number(feeAmounts.water) || 0
-  if (feeChecks.other) total += Number(feeAmounts.other) || 0
-  return total.toFixed(2)
+  const amounts: number[] = []
+  if (feeChecks.rent) amounts.push(Number(feeAmounts.rent) || 0)
+  if (feeChecks.electric) amounts.push(Number(feeAmounts.electric) || 0)
+  if (feeChecks.water) amounts.push(Number(feeAmounts.water) || 0)
+  if (feeChecks.other) amounts.push(Number(feeAmounts.other) || 0)
+  return sum(...amounts).toFixed(2)
 })
 
 const calculateElectricUsage = () => {
@@ -193,9 +194,9 @@ const calculateElectricUsage = () => {
     return
   }
   
-  meterReads.electricUsage = endNum - start
+  meterReads.electricUsage = subtract(endNum, start)
   // 电费单价假设为 0.6 元/度（可从房屋配置获取）
-  feeAmounts.electric = Number((meterReads.electricUsage * 0.6).toFixed(2))
+  feeAmounts.electric = multiply(meterReads.electricUsage, 0.6)
 }
 
 const calculateWaterUsage = () => {
@@ -215,9 +216,9 @@ const calculateWaterUsage = () => {
     return
   }
   
-  meterReads.waterUsage = endNum - start
+  meterReads.waterUsage = subtract(endNum, start)
   // 水费单价假设为 3 元/吨（可从房屋配置获取）
-  feeAmounts.water = Number((meterReads.waterUsage * 3).toFixed(2))
+  feeAmounts.water = multiply(meterReads.waterUsage, 3)
 }
 
 const confirmDate = () => {

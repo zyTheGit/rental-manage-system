@@ -27,17 +27,33 @@
         <div class="section-title">费用明细（勾选需要缴费的项目）</div>
 
         <div class="fee-item" :class="{ 'fee-selected': feeChecks.rent }">
-          <div class="fee-header" @click="feeChecks.rent = !feeChecks.rent; toggleFee('rent');">
+          <div
+            class="fee-header"
+            @click="
+              feeChecks.rent = !feeChecks.rent;
+              toggleFee('rent');
+            "
+          >
             <label class="fee-check-large" @click.stop>
-              <input type="checkbox" v-model="feeChecks.rent" @change="toggleFee('rent')" />
+              <input
+                type="checkbox"
+                v-model="feeChecks.rent"
+                @change="toggleFee('rent')"
+              />
               <span class="checkmark-large"></span>
             </label>
             <span class="fee-name">🏠 房租</span>
-            <span v-if="feeChecks.rent" class="fee-amount-badge">¥{{ feeAmounts.rent || 0 }}</span>
+            <span v-if="feeChecks.rent" class="fee-amount-badge"
+              >¥{{ feeAmounts.rent || 0 }}</span
+            >
           </div>
           <div v-if="feeChecks.rent" class="fee-input">
             <span class="currency">¥</span>
-            <input v-model.number="feeAmounts.rent" type="number" placeholder="金额" />
+            <input
+              v-model.number="feeAmounts.rent"
+              type="number"
+              placeholder="金额"
+            />
           </div>
           <div v-if="feeChecks.rent && houseInfo.rent" class="fee-hint-row">
             <span class="fee-hint-text">参考价: ¥{{ houseInfo.rent }}/月</span>
@@ -45,18 +61,32 @@
         </div>
 
         <div class="fee-item" :class="{ 'fee-selected': feeChecks.electric }">
-          <div class="fee-header" @click="feeChecks.electric = !feeChecks.electric; toggleFee('electric');">
+          <div
+            class="fee-header"
+            @click="
+              feeChecks.electric = !feeChecks.electric;
+              toggleFee('electric');
+            "
+          >
             <label class="fee-check-large" @click.stop>
-              <input type="checkbox" v-model="feeChecks.electric" @change="toggleFee('electric')" />
+              <input
+                type="checkbox"
+                v-model="feeChecks.electric"
+                @change="toggleFee('electric')"
+              />
               <span class="checkmark-large"></span>
             </label>
             <span class="fee-name">⚡ 电费</span>
-            <span v-if="feeChecks.electric" class="fee-amount-badge">¥{{ feeAmounts.electric }}</span>
+            <span v-if="feeChecks.electric" class="fee-amount-badge"
+              >¥{{ feeAmounts.electric }}</span
+            >
           </div>
           <div v-if="feeChecks.electric" class="fee-meter">
             <div class="meter-row">
               <span class="meter-label">上期读数</span>
-              <span class="meter-value">{{ meterReads.lastElectricEndRead }}</span>
+              <span class="meter-value">{{
+                meterReads.lastElectricEndRead
+              }}</span>
             </div>
             <div class="meter-row">
               <span class="meter-label">本期读数</span>
@@ -71,23 +101,39 @@
             </div>
             <div class="meter-row">
               <span class="meter-label">用电量</span>
-              <span class="meter-value highlight">{{ meterReads.electricUsage || 0 }} 度</span>
+              <span class="meter-value highlight"
+                >{{ meterReads.electricUsage || 0 }} 度</span
+              >
             </div>
             <div class="meter-row total">
               <span class="meter-label">电费金额</span>
-              <span class="meter-value price">¥{{ feeAmounts.electric || 0 }}</span>
+              <span class="meter-value price"
+                >¥{{ feeAmounts.electric || 0 }}</span
+              >
             </div>
           </div>
         </div>
 
         <div class="fee-item" :class="{ 'fee-selected': feeChecks.water }">
-          <div class="fee-header" @click="feeChecks.water = !feeChecks.water; toggleFee('water');">
+          <div
+            class="fee-header"
+            @click="
+              feeChecks.water = !feeChecks.water;
+              toggleFee('water');
+            "
+          >
             <label class="fee-check-large" @click.stop>
-              <input type="checkbox" v-model="feeChecks.water" @change="toggleFee('water')" />
+              <input
+                type="checkbox"
+                v-model="feeChecks.water"
+                @change="toggleFee('water')"
+              />
               <span class="checkmark-large"></span>
             </label>
             <span class="fee-name">💧 水费</span>
-            <span v-if="feeChecks.water" class="fee-amount-badge">¥{{ feeAmounts.water }}</span>
+            <span v-if="feeChecks.water" class="fee-amount-badge"
+              >¥{{ feeAmounts.water }}</span
+            >
           </div>
           <div v-if="feeChecks.water" class="fee-meter">
             <div class="meter-row">
@@ -107,17 +153,27 @@
             </div>
             <div class="meter-row">
               <span class="meter-label">用水量</span>
-              <span class="meter-value highlight">{{ meterReads.waterUsage || 0 }} 吨</span>
+              <span class="meter-value highlight"
+                >{{ meterReads.waterUsage || 0 }} 吨</span
+              >
             </div>
             <div class="meter-row total">
               <span class="meter-label">水费金额</span>
-              <span class="meter-value price">¥{{ feeAmounts.water || 0 }}</span>
+              <span class="meter-value price"
+                >¥{{ feeAmounts.water || 0 }}</span
+              >
             </div>
           </div>
         </div>
 
         <div class="fee-item" :class="{ 'fee-selected': feeChecks.other }">
-          <div class="fee-header" @click="feeChecks.other = !feeChecks.other; toggleFee('other');">
+          <div
+            class="fee-header"
+            @click="
+              feeChecks.other = !feeChecks.other;
+              toggleFee('other');
+            "
+          >
             <label class="fee-check-large" @click.stop>
               <input type="checkbox" v-model="feeChecks.other" />
               <span class="checkmark-large"></span>
@@ -127,7 +183,12 @@
           <div v-if="feeChecks.other" class="fee-other-content">
             <div class="fee-input-row">
               <span class="currency">¥</span>
-              <input v-model.number="feeAmounts.other" type="number" class="fee-amount-input" placeholder="金额" />
+              <input
+                v-model.number="feeAmounts.other"
+                type="number"
+                class="fee-amount-input"
+                placeholder="金额"
+              />
             </div>
           </div>
         </div>
@@ -140,7 +201,12 @@
         </div>
 
         <div class="form-section">
-          <textarea v-model="form.remark" class="remark-input" placeholder="备注（选填）" rows="2"></textarea>
+          <textarea
+            v-model="form.remark"
+            class="remark-input"
+            placeholder="备注（选填）"
+            rows="2"
+          ></textarea>
         </div>
       </div>
 
@@ -150,8 +216,14 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" @click="$emit('update:show', false)">取消</button>
-        <button class="btn btn-primary" @click="handleSave" :disabled="!form.tenantId || currentTotalNum <= 0">
+        <button class="btn btn-secondary" @click="$emit('update:show', false)">
+          取消
+        </button>
+        <button
+          class="btn btn-primary"
+          @click="handleSave"
+          :disabled="!form.tenantId || currentTotalNum <= 0"
+        >
           确认缴费
         </button>
       </div>
@@ -186,6 +258,7 @@ import dayjs from "dayjs";
 import { tenantsApi, housesApi } from "@/api";
 import type { Tenant } from "@/api/tenants";
 import CommonPicker from "@/components/CommonPicker.vue";
+import { subtract, multiply } from "@/utils/decimal";
 
 const props = defineProps<{
   show: boolean;
@@ -289,8 +362,11 @@ const calculateElectric = () => {
     feeAmounts.electric = 0;
     return;
   }
-  meterReads.electricUsage = endNum - start;
-  feeAmounts.electric = Number((meterReads.electricUsage * houseInfo.electricRate).toFixed(2));
+  meterReads.electricUsage = subtract(endNum, start);
+  feeAmounts.electric = multiply(
+    meterReads.electricUsage,
+    houseInfo.electricRate,
+  );
 };
 
 const calculateWater = () => {
@@ -307,8 +383,8 @@ const calculateWater = () => {
     feeAmounts.water = 0;
     return;
   }
-  meterReads.waterUsage = endNum - start;
-  feeAmounts.water = Number((meterReads.waterUsage * houseInfo.waterRate).toFixed(2));
+  meterReads.waterUsage = subtract(endNum, start);
+  feeAmounts.water = multiply(meterReads.waterUsage, houseInfo.waterRate);
 };
 
 const handleTenantChange = async (tenantId: number) => {
@@ -373,7 +449,10 @@ const handleSave = () => {
     const start = meterReads.lastElectricEndRead || 0;
     const end = Number(meterReads.electricEndRead) || 0;
     if (end < start) {
-      showToast({ type: "fail", message: `电费结束读数不能小于起始读数 ${start}` });
+      showToast({
+        type: "fail",
+        message: `电费结束读数不能小于起始读数 ${start}`,
+      });
       return;
     }
     items.push({
@@ -388,7 +467,10 @@ const handleSave = () => {
     const start = meterReads.lastWaterEndRead || 0;
     const end = Number(meterReads.waterEndRead) || 0;
     if (end < start) {
-      showToast({ type: "fail", message: `水费结束读数不能小于起始读数 ${start}` });
+      showToast({
+        type: "fail",
+        message: `水费结束读数不能小于起始读数 ${start}`,
+      });
       return;
     }
     items.push({
@@ -430,7 +512,7 @@ watch(
       feeAmounts.water = 0;
       feeAmounts.other = 0;
     }
-  }
+  },
 );
 </script>
 
@@ -462,7 +544,7 @@ watch(
 }
 
 .modal-body {
-  padding: 0 20px 20px;
+  padding: 24px 20px 20px;
   max-height: 70vh;
   overflow-y: auto;
   overflow-x: hidden;
@@ -785,7 +867,7 @@ watch(
   max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 20px;
+  padding: 24px 20px 16px;
 }
 
 .picker-option {
@@ -822,7 +904,7 @@ watch(
 }
 
 .picker-option.active .option-radio::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;
