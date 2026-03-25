@@ -150,8 +150,7 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-@import '@/styles/theme.css';
+<style scoped lang="less">
 
 .dashboard-page {
   padding: 16px;

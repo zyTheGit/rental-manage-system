@@ -22,7 +22,7 @@ defineEmits<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .search-box {
   display: flex;
   align-items: center;

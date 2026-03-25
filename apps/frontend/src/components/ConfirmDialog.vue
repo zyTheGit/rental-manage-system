@@ -28,7 +28,7 @@ defineEmits<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .confirm-dialog {
   background: #fff;
   border-radius: 16px;

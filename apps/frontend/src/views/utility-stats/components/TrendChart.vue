@@ -111,7 +111,7 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .chart-section {
   background: var(--bg-card);
   border-radius: var(--radius-lg);

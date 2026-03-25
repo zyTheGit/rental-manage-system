@@ -93,8 +93,7 @@ const formatTime = (paidAt: string) => {
 }
 </script>
 
-<style scoped>
-@import '../../../styles/theme.css';
+<style scoped lang="less">
 
 .loading-state {
   display: flex;

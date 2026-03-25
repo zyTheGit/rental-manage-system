@@ -7,8 +7,8 @@ import "vant/lib/index.css";
 // Import Vant icon styles
 import "vant/lib/icon/index.css";
 
-// Import custom theme
-import "./styles/theme.css";
+// Import custom LESS styles
+import "./styles/index.less";
 
 // Import Vant components
 import { Icon, Lazyload, setToastDefaultOptions } from "vant";

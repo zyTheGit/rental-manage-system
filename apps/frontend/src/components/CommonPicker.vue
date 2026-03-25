@@ -7,7 +7,7 @@
   >
     <div class="picker-header">
       <span class="picker-title">{{ title }}</span>
-      <button class="btn-close" @click="$emit('update:show', false)">✕</button>
+      <button class="picker-close" @click="$emit('update:show', false)">✕</button>
     </div>
     <div class="picker-options">
       <div
@@ -17,14 +17,14 @@
         :class="{ active: modelValue === option.value }"
         @click="handleSelect(option.value)"
       >
-        <span class="option-radio"></span>
-        <div class="option-content">
-          <div class="option-title">{{ option.label }}</div>
-          <div v-if="option.subtitle" class="option-subtitle">{{ option.subtitle }}</div>
+        <span class="picker-radio"></span>
+        <div class="picker-option-content">
+          <div class="picker-option-title">{{ option.label }}</div>
+          <div v-if="option.subtitle" class="picker-option-subtitle">{{ option.subtitle }}</div>
         </div>
       </div>
-      <div v-if="options.length === 0" class="empty-state">
-        <span class="empty-icon">📋</span>
+      <div v-if="options.length === 0" class="picker-empty">
+        <span class="picker-empty__icon">📋</span>
         <p>暂无选项</p>
       </div>
     </div>
@@ -73,7 +73,7 @@ const handleSelect = (value: any) => {
   color: var(--text-main);
 }
 
-.btn-close {
+.picker-close {
   background: none;
   border: none;
   font-size: 20px;
@@ -113,7 +113,7 @@ const handleSelect = (value: any) => {
   background: var(--primary-light);
 }
 
-.option-radio {
+.picker-radio {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -123,12 +123,12 @@ const handleSelect = (value: any) => {
   transition: all 0.2s ease;
 }
 
-.picker-option.active .option-radio {
+.picker-option.active .picker-radio {
   border-color: var(--primary);
   position: relative;
 }
 
-.picker-option.active .option-radio::after {
+.picker-option.active .picker-radio::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -140,29 +140,29 @@ const handleSelect = (value: any) => {
   background: var(--primary);
 }
 
-.option-content {
+.picker-option-content {
   flex: 1;
 }
 
-.option-title {
+.picker-option-title {
   font-size: 15px;
   font-weight: 600;
   color: var(--text-main);
   margin-bottom: 4px;
 }
 
-.option-subtitle {
+.picker-option-subtitle {
   font-size: 13px;
   color: var(--text-secondary);
 }
 
-.empty-state {
+.picker-empty {
   text-align: center;
   padding: 40px 20px;
   color: var(--text-secondary);
 }
 
-.empty-icon {
+.picker-empty__icon {
   font-size: 40px;
   display: block;
   margin-bottom: 12px;

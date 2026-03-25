@@ -413,8 +413,7 @@ const exportToCSV = () => {
 onMounted(() => fetchPayments());
 </script>
 
-<style scoped>
-@import "../../styles/theme.css";
+<style scoped lang="less">
 
 .payments-page {
   padding: 16px;

@@ -77,8 +77,7 @@ const getItemClass = (type: string) => `tag-${typesMap[type]?.tagType || 'defaul
 const formatTime = (paidAt: string) => dayjs(paidAt).format('YYYY-MM-DD HH:mm')
 </script>
 
-<style scoped>
-@import '../../../styles/theme.css';
+<style scoped lang="less">
 
 .modal-overlay {
   position: fixed;

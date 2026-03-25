@@ -92,7 +92,7 @@ watch(() => props.stat, (val) => {
 }, { immediate: true })
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .detail-modal {
   height: 100%;
   display: flex;

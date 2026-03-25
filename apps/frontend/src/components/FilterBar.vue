@@ -28,7 +28,7 @@ defineEmits<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .filter-group {
   display: flex;
   gap: 8px;

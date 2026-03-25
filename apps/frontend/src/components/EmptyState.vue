@@ -21,7 +21,7 @@ defineEmits<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .empty-state {
   display: flex;
   flex-direction: column;

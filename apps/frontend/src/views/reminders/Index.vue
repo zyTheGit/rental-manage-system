@@ -214,8 +214,7 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-@import '../../styles/theme.css';
+<style scoped lang="less">
 
 .reminders-page {
   padding: 16px;

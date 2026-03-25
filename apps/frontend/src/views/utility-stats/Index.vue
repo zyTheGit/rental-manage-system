@@ -173,8 +173,7 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-@import '../../styles/theme.css';
+<style scoped lang="less">
 
 .utility-stats-page {
   padding: 16px;

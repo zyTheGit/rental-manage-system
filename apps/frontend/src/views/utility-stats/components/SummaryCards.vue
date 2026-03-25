@@ -36,7 +36,7 @@ defineProps<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .summary-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;

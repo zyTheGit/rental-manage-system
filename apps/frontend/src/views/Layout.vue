@@ -250,8 +250,7 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-@import '@/styles/theme.css';
+<style scoped lang="less">
 
 .layout-container {
   min-height: 100vh;

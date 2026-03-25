@@ -516,8 +516,7 @@ watch(
 );
 </script>
 
-<style scoped>
-@import "../../../styles/theme.css";
+<style scoped lang="less">
 
 .modal-header {
   display: flex;

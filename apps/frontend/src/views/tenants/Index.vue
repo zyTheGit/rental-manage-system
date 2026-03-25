@@ -270,8 +270,7 @@ const exportToCSV = () => {
 onMounted(() => fetchTenants())
 </script>
 
-<style scoped>
-@import '../../styles/theme.css';
+<style scoped lang="less">
 
 .tenants-page {
   padding: 16px;

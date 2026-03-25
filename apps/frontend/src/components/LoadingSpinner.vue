@@ -11,7 +11,7 @@ defineProps<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .loading-state {
   display: flex;
   flex-direction: column;

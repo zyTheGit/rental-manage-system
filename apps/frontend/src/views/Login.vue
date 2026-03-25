@@ -91,8 +91,7 @@ const handleSubmit = async () => {
 }
 </script>
 
-<style scoped>
-@import '@/styles/theme.css';
+<style scoped lang="less">
 
 .login-page {
   min-height: 100vh;

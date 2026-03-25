@@ -38,8 +38,7 @@ watch(() => props.show, (val) => {
 })
 </script>
 
-<style scoped>
-@import '../../../styles/theme.css';
+<style scoped lang="less">
 
 .modal-overlay {
   position: fixed;

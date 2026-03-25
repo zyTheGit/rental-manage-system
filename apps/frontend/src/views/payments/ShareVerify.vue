@@ -211,8 +211,7 @@ const handleVerify = async () => {
 onMounted(() => fetchVerifyInfo())
 </script>
 
-<style scoped>
-@import '../../styles/theme.css';
+<style scoped lang="less">
 
 .share-verify-page {
   min-height: 100vh;

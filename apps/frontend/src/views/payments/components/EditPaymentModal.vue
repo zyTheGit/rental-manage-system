@@ -307,7 +307,7 @@ watch(() => props.payment, (val) => {
 }, { immediate: true })
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .modal-overlay {
   position: fixed;
   inset: 0;

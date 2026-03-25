@@ -90,8 +90,7 @@ const updateFilter = (key: keyof Filters, value: any) => {
 }
 </script>
 
-<style scoped>
-@import '../../../styles/theme.css';
+<style scoped lang="less">
 
 .toolbar {
   display: flex;

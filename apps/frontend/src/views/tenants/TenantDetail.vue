@@ -140,7 +140,7 @@ const handleClose = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .detail-modal {
   max-height: 80vh;
   overflow-y: auto;

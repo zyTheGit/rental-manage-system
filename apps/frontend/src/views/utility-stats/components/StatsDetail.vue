@@ -52,7 +52,7 @@ defineEmits<{
 }>()
 </script>
 
-<style scoped>
+<style scoped lang="less">
 .detail-section {
   background: var(--bg-card);
   border-radius: var(--radius-lg);

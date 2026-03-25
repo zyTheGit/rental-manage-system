@@ -206,8 +206,7 @@ watch(() => props.show, (show) => {
 }, { immediate: true })
 </script>
 
-<style scoped>
-@import '@/styles/theme.css';
+<style scoped lang="less">
 
 .modal-popup {
   max-height: 85vh;
