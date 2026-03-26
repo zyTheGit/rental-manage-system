@@ -3,13 +3,17 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestj
 import { RemindersService } from './reminders.service';
 import { CreateReminderDto, UpdateReminderDto } from './dto/reminder.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { EmailService } from '../email/email.service';
 
 @ApiTags('缴费提醒')
 @Controller('reminders')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class RemindersController {
-  constructor(private readonly remindersService: RemindersService) {}
+  constructor(
+    private readonly remindersService: RemindersService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: '获取所有提醒配置' })
@@ -21,6 +25,25 @@ export class RemindersController {
   @ApiOperation({ summary: '获取逾期提醒列表' })
   async getOverdueReminders() {
     return this.remindersService.getOverdueReminders();
+  }
+
+  @Get('test-smtp')
+  @ApiOperation({ summary: '测试SMTP邮件配置' })
+  async testSmtp() {
+    return this.emailService.testConnection();
+  }
+
+  @Post('send-emails')
+  @ApiOperation({ summary: '发送今日提醒邮件（手动触发）' })
+  async sendReminderEmails() {
+    return this.remindersService.sendReminderEmails();
+  }
+
+  @Post('test-email/:tenantId')
+  @ApiParam({ name: 'tenantId', description: '租户 ID' })
+  @ApiOperation({ summary: '发送测试提醒邮件' })
+  async sendTestEmail(@Param('tenantId') tenantId: string) {
+    return this.remindersService.sendTestReminderEmail(+tenantId);
   }
 
   @Get(':id')

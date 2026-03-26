@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsDateString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsDateString, IsNotEmpty, IsEmail } from 'class-validator';
 
 export class CreateTenantDto {
   @IsString()
@@ -12,6 +12,10 @@ export class CreateTenantDto {
   @IsString()
   @IsNotEmpty()
   idCard: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -38,6 +42,10 @@ export class UpdateTenantDto {
   @IsString()
   @IsOptional()
   idCard?: string;
+
+  @IsEmail()
+  @IsOptional()
+  email?: string;
 
   @IsNumber()
   @IsOptional()

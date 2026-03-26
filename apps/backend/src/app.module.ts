@@ -9,11 +9,13 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { AdminInitModule } from './modules/admin-init/admin-init.module';
 import { JwtConfigModule } from './jwt-config/jwt-config.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
     }),
     JwtConfigModule,
     PrismaModule,
@@ -24,6 +26,7 @@ import { RemindersModule } from './modules/reminders/reminders.module';
     DashboardModule,
     AdminInitModule,
     RemindersModule,
+    EmailModule,
   ],
 })
 export class AppModule {}

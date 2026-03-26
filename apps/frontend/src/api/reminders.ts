@@ -37,5 +37,11 @@ export const remindersApi = {
   },
   getOverdue: () => {
     return request.get('/reminders/overdue')
+  },
+  sendEmails: () => {
+    return request.post('/reminders/send-emails')
+  },
+  sendTestEmail: (tenantId: number) => {
+    return request.post(`/reminders/test-email/${tenantId}`)
   }
 }

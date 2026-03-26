@@ -88,9 +88,44 @@ export class TenantsService {
   }
 
   async update(id: number, updateTenantDto: UpdateTenantDto) {
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException('租户不存在');
+    }
+
+    const data: any = {};
+
+    if (updateTenantDto.name !== undefined) {
+      data.name = updateTenantDto.name;
+    }
+    if (updateTenantDto.phone !== undefined) {
+      data.phone = updateTenantDto.phone;
+    }
+    if (updateTenantDto.idCard !== undefined) {
+      data.idCard = updateTenantDto.idCard;
+    }
+    if (updateTenantDto.email !== undefined) {
+      data.email = updateTenantDto.email || null;
+    }
+    if (updateTenantDto.houseId !== undefined) {
+      data.houseId = updateTenantDto.houseId;
+    }
+    if (updateTenantDto.rentStart !== undefined) {
+      data.rentStart = new Date(updateTenantDto.rentStart);
+    }
+    if (updateTenantDto.rentEnd !== undefined && updateTenantDto.rentEnd) {
+      data.rentEnd = new Date(updateTenantDto.rentEnd);
+    }
+    if (updateTenantDto.status !== undefined) {
+      data.status = updateTenantDto.status;
+    }
+
     return this.prisma.tenant.update({
       where: { id },
-      data: updateTenantDto,
+      data,
       include: {
         house: true,
       },

@@ -2,9 +2,8 @@
   <van-popup
     :show="show"
     @update:show="$emit('update:show', $event)"
-    position="bottom"
-    round
-    class="house-modal-popup"
+    position="right"
+    class="house-modal-popup fullscreen-modal"
   >
     <div class="modal-header">
       <div class="header-bg-pattern"></div>
@@ -323,8 +322,12 @@ watch(() => props.show, (show) => {
 
 <style scoped lang="less">
 
+.fullscreen-modal {
+  width: 100%;
+  height: 100%;
+}
+
 .house-modal-popup {
-  max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -332,9 +335,13 @@ watch(() => props.show, (show) => {
 
 .modal-header {
   position: relative;
-  padding: 24px 20px 20px;
+  padding: 16px 20px;
   background: linear-gradient(135deg, var(--primary) 0%, #0D5F59 100%);
   overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .header-bg-pattern {
@@ -349,59 +356,59 @@ watch(() => props.show, (show) => {
 .header-content {
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .header-icon {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   background: rgba(255,255,255,0.15);
-  border-radius: 14px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
   backdrop-filter: blur(10px);
   
   svg {
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
     color: white;
   }
 }
 
 .modal-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: white;
-  margin: 0 0 4px 0;
+  margin: 0;
   letter-spacing: -0.02em;
 }
 
 .modal-subtitle {
-  font-size: 13px;
-  color: rgba(255,255,255,0.7);
-  margin: 0;
+  display: none;
 }
 
 .btn-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 32px;
-  height: 32px;
+  position: relative;
+  width: 28px;
+  height: 28px;
   background: rgba(255,255,255,0.15);
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
   transition: all 0.2s ease;
+  flex-shrink: 0;
+  z-index: 1;
   
   svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     color: white;
   }
   
@@ -690,6 +697,7 @@ watch(() => props.show, (show) => {
   padding: 16px 20px 24px;
   background: var(--bg-card);
   border-top: 1px solid var(--border-light);
+  flex-shrink: 0;
 }
 
 .btn {

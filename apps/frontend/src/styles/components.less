@@ -343,3 +343,76 @@
     font-size: @font-base;
   }
 }
+
+// ===== Page Layout 统一页面布局 =====
+.page-container {
+  padding: 16px;
+  background: var(--bg-page);
+  min-height: 100vh;
+  padding-bottom: 80px;
+  
+  @media (min-width: 768px) {
+    padding: 24px;
+    padding-bottom: 24px;
+  }
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding-top: 4px;
+  
+  @media (min-width: 768px) {
+    margin-bottom: 24px;
+    padding-top: 0;
+  }
+}
+
+.page-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  
+  @media (min-width: 768px) {
+    font-size: 26px;
+  }
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 4px 0 0 0;
+  line-height: 1.4;
+  
+  @media (min-width: 768px) {
+    font-size: 14px;
+    margin-top: 6px;
+  }
+}
+
+.page-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  
+  @media (min-width: 768px) {
+    margin-bottom: 24px;
+  }
+}
+
+.page-content {
+  margin-top: 0;
+}

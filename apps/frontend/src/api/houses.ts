@@ -30,7 +30,7 @@ export const housesApi = {
     return request.post('/houses', data)
   },
   update: (id: number, data: Partial<House>) => {
-    return request.patch(`/houses/${id}`, data)
+    return request.put(`/houses/${id}`, data)
   },
   delete: (id: number) => {
     return request.delete(`/houses/${id}`)

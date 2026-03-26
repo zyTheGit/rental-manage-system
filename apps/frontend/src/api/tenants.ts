@@ -29,7 +29,7 @@ export const tenantsApi = {
     return request.post('/tenants', data)
   },
   update: (id: number, data: Partial<Tenant>) => {
-    return request.patch(`/tenants/${id}`, data)
+    return request.put(`/tenants/${id}`, data)
   },
   delete: (id: number) => {
     return request.delete(`/tenants/${id}`)

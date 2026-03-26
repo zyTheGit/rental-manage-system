@@ -1,96 +1,135 @@
 <template>
-  <div class="tenants-page">
+  <div class="tenants-page page-container">
     <div class="page-header">
-      <div class="page-info">
-        <h1 class="page-title">租户管理</h1>
-        <p class="page-subtitle">管理租户信息与租房合同</p>
+      <div class="header-left">
+        <div class="header-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          </svg>
+        </div>
+        <div class="header-info">
+          <h1 class="page-title">租户管理</h1>
+          <p class="page-subtitle">{{ tenants.length }} 位租户</p>
+        </div>
       </div>
-      <button class="btn btn-primary ripple-effect" @click="openAddModal">
-        <span class="btn-icon">➕</span>
-        <span>添加租户</span>
+      <button class="btn-add" @click="openAddModal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
       </button>
     </div>
 
     <div class="toolbar">
-      <div class="toolbar-left">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input
-            :value="searchText"
-            type="text"
-            class="search-input"
-            placeholder="搜索姓名、电话、身份证..."
-            @input="handleSearchInput(($event.target as HTMLInputElement).value)"
-          />
-        </div>
-<div class="filter-group" @click="showStatusPicker = true">
-           <div class="filter-select-custom">
-             <span>{{ filterStatusText }}</span>
-             <span class="filter-arrow">▼</span>
-           </div>
-         </div>
+      <div class="search-bar">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+          :value="searchText"
+          type="text"
+          placeholder="搜索租户..."
+          @input="handleSearchInput(($event.target as HTMLInputElement).value)"
+        />
       </div>
-      <button class="btn btn-secondary ripple-effect" @click="exportToCSV" :disabled="exporting">
-        <span class="btn-icon">📥</span>
-        <span>{{ exporting ? '导出中...' : '导出' }}</span>
-      </button>
+      <div class="filter-chip" @click="showStatusPicker = true">
+        <span>{{ filterStatusText }}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
     </div>
 
-    <div v-if="loading" class="loading-state">
-      <div class="loading-spinner"></div>
-      <p>加载中...</p>
+    <div v-if="loading" class="loading-container">
+      <div class="loading-pulse"></div>
+      <span>加载中...</span>
     </div>
 
     <div v-else class="tenants-list">
-      <div v-for="tenant in tenants" :key="tenant.id" class="tenant-card">
-        <div class="card-header">
-          <div class="tenant-info">
-            <h3 class="tenant-name">{{ tenant.name }}</h3>
-            <span class="tenant-contact">{{ tenant.phone }}</span>
+      <div 
+        v-for="(tenant, index) in tenants" 
+        :key="tenant.id" 
+        class="tenant-card"
+        :style="{ animationDelay: `${index * 0.05}s` }"
+      >
+        <div class="card-top">
+          <div class="tenant-avatar">
+            {{ tenant.name?.charAt(0) || '?' }}
           </div>
-          <span class="status-tag" :class="tenant.status === 'RENTED' ? 'status-active' : 'status-inactive'">
-            {{ tenant.status === 'RENTED' ? '已租' : '已退租' }}
-          </span>
+          <div class="status-badge" :class="tenant.status === 'RENTED' ? 'active' : 'inactive'">
+            {{ tenant.status === 'RENTED' ? '在租' : '已退租' }}
+          </div>
         </div>
 
-        <div class="card-body">
-          <div class="info-row">
-            <span class="info-label">身份证:</span>
-            <span class="info-value">{{ tenant.idCard }}</span>
+        <div class="card-content">
+          <div class="tenant-header">
+            <h3 class="tenant-name">{{ tenant.name }}</h3>
+            <span class="tenant-phone">{{ tenant.phone }}</span>
           </div>
-          <div class="info-row" v-if="tenant.house?.title">
-            <span class="info-label">房屋:</span>
-            <span class="info-value">{{ tenant.house.title }}</span>
-          </div>
-          <div class="info-row info-highlight">
-            <span class="info-label">租期:</span>
-            <span class="info-value">{{ formatDateRange(tenant.rentStart, tenant.rentEnd) }}</span>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <path d="M3 10h18"/>
+              </svg>
+              <span>{{ tenant.house?.title || '未分配' }}</span>
+            </div>
+            <div class="info-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+              <span>{{ formatDateRange(tenant.rentStart, tenant.rentEnd) }}</span>
+            </div>
           </div>
         </div>
 
         <div class="card-actions">
-          <button class="btn-action btn-view" @click="viewPaymentRecords(tenant)">
-            <span>📋 缴费</span>
+          <button class="action-btn secondary" @click="viewPaymentRecords(tenant)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+            </svg>
+            <span>缴费</span>
           </button>
-          <button class="btn-action btn-edit" @click="editTenant(tenant)">
-            <span>✏️ 编辑</span>
+          <button class="action-btn secondary" @click="editTenant(tenant)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            <span>编辑</span>
           </button>
-          <button
-            class="btn-action"
-            :class="tenant.status === 'RENTED' ? 'btn-checkout' : 'btn-disabled'"
+          <button 
+            v-if="tenant.status === 'RENTED'"
+            class="action-btn danger" 
             @click="confirmCheckoutFn(tenant)"
-            :disabled="tenant.status === 'CHECKED_OUT'"
           >
-            <span>🔄 退租</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>退租</span>
           </button>
         </div>
       </div>
 
       <div v-if="tenants.length === 0" class="empty-state">
-        <span class="empty-icon">👥</span>
-        <p class="empty-text">暂无租户数据</p>
-        <button class="btn btn-primary" @click="openAddModal">
-          添加第一个租户
+        <div class="empty-visual">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+            <circle cx="8.5" cy="7" r="4"/>
+            <path d="M20 8v6M23 11h-6"/>
+          </svg>
+        </div>
+        <h3>还没有租户</h3>
+        <p>添加您的第一位租户开始管理</p>
+        <button class="btn-add-large" @click="openAddModal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          <span>添加租户</span>
         </button>
       </div>
     </div>
@@ -98,9 +137,8 @@
     <TenantModal
       v-if="showModal"
       :show="showModal"
-      :tenants="tenants"
-      :houses="houses"
-      :editing-tenant="editingTenant"
+      :available-houses="availableHouses"
+      :tenant="editingTenant"
       @close="closeModal"
       @save="handleSave"
     />
@@ -126,9 +164,8 @@ import CommonPicker from '@/components/CommonPicker.vue'
 
 const router = useRouter()
 const tenants = ref<any[]>([])
-const houses = ref<any[]>([])
+const availableHouses = ref<any[]>([])
 const loading = ref(false)
-const exporting = ref(false)
 const searchText = ref('')
 const filterStatus = ref<string>('')
 const showModal = ref(false)
@@ -136,21 +173,53 @@ const editingTenant = ref<any>(null)
 const showStatusPicker = ref(false)
 
 const statusOptions = [
-  { value: '', label: '全部状态' },
-  { value: 'RENTED', label: '已租' },
+  { value: '', label: '全部' },
+  { value: 'RENTED', label: '在租' },
   { value: 'CHECKED_OUT', label: '已退租' },
 ]
 
 const filterStatusText = computed(() => {
   const option = statusOptions.find(o => o.value === filterStatus.value)
-  return option?.label || '全部状态'
+  return option?.label || '全部'
 })
 
 const formatDateRange = (start: string, end: string) => {
-  return `${dayjs(start).format('YYYY-MM-DD')} ~ ${dayjs(end).format('YYYY-MM-DD')}`
+  if (!start) return '未设置'
+  return `${dayjs(start).format('MM/DD')}${end ? ' - ' + dayjs(end).format('MM/DD') : ''}`
 }
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+const fetchAvailableHouses = async (currentHouseId?: number) => {
+  try {
+    const data = await housesApi.getList({ status: 'AVAILABLE' }) as unknown as any[]
+    let houses = Array.isArray(data) ? data : []
+    
+    if (currentHouseId) {
+      const currentHouse = await housesApi.getById(currentHouseId) as any
+      if (currentHouse && !houses.find((h: any) => h.id === currentHouseId)) {
+        houses = [currentHouse, ...houses]
+      }
+    }
+    
+    availableHouses.value = houses
+  } catch (error) {
+    console.error('获取可用房屋列表失败', error)
+    availableHouses.value = []
+  }
+}
+
+const openAddModal = async () => {
+  editingTenant.value = null
+  await fetchAvailableHouses()
+  showModal.value = true
+}
+
+const editTenant = async (tenant: any) => {
+  editingTenant.value = tenant
+  await fetchAvailableHouses(tenant.houseId)
+  showModal.value = true
+}
 
 const fetchTenants = async (search?: string) => {
   loading.value = true
@@ -185,27 +254,6 @@ watch(filterStatus, () => {
   fetchTenants()
 })
 
-const fetchHouses = async () => {
-  try {
-    const data = await housesApi.getList() as unknown as any[]
-    houses.value = data
-  } catch (error) {
-    console.error('获取房屋列表失败', error)
-  }
-}
-
-const openAddModal = async () => {
-  editingTenant.value = null
-  await fetchHouses()
-  showModal.value = true
-}
-
-const editTenant = async (tenant: any) => {
-  editingTenant.value = tenant
-  await fetchHouses()
-  showModal.value = true
-}
-
 const closeModal = () => {
   showModal.value = false
   editingTenant.value = null
@@ -213,11 +261,26 @@ const closeModal = () => {
 
 const handleSave = async (data: any) => {
   try {
+    const saveData: any = {
+      name: data.name,
+      phone: data.phone,
+      idCard: data.idCard,
+      houseId: data.houseId,
+      rentStart: data.rentStart,
+    }
+    
+    if (data.email) {
+      saveData.email = data.email
+    }
+    if (data.rentEnd) {
+      saveData.rentEnd = data.rentEnd
+    }
+    
     if (editingTenant.value) {
-      await tenantsApi.update(editingTenant.value.id, data)
+      await tenantsApi.update(editingTenant.value.id, saveData)
       showToast({ type: 'success', message: '更新成功' })
     } else {
-      await tenantsApi.create(data)
+      await tenantsApi.create(saveData)
       showToast({ type: 'success', message: '添加成功' })
     }
     closeModal()
@@ -250,406 +313,402 @@ const confirmCheckoutFn = async (tenant: any) => {
   }
 }
 
-const exportToCSV = () => {
-  exporting.value = true
-  try {
-    const data = tenants.value
-    const rows = data.map(t => [
-      t.name, t.phone, t.idCard, t.house?.title || '',
-      t.rentStart ? dayjs(t.rentStart).format('YYYY-MM-DD') : '',
-      t.rentEnd ? dayjs(t.rentEnd).format('YYYY-MM-DD') : '',
-      t.status === 'RENTED' ? '已租' : '已退租'
-    ].map(v => `"${v || ''}"`).join(','))
-
-    const csvContent = ['姓名,电话,身份证,房屋,租期开始,租期结束,状态', ...rows].join('\n')
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `租户列表_${dayjs().format('YYYY-MM-DD')}.csv`
-    link.click()
-    showToast({ type: 'success', message: '导出成功' })
-  } catch (error) {
-    showToast({ type: 'fail', message: '导出失败' })
-  } finally {
-    exporting.value = false
-  }
-}
-
 onMounted(() => fetchTenants())
 </script>
 
 <style scoped lang="less">
-
 .tenants-page {
-  padding: 16px;
-  background: var(--bg-page);
   min-height: 100vh;
-  padding-bottom: 60px;
+  background: var(--bg-page);
+  padding-bottom: 100px;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 .page-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 16px 0 0;
-  margin-bottom: 16px;
+  padding: 20px 16px 16px;
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
 }
 
-.page-info h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin: 0;
-  line-height: 1.2;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
-.page-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 4px 0 0 0;
-}
-
-.btn {
-  display: inline-flex;
+.header-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
+  backdrop-filter: blur(10px);
+  
+  svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+  }
+}
+
+.header-info {
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 2px 0;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    margin: 0;
+  }
+}
+
+.btn-add {
+  width: 44px;
+  height: 44px;
+  background: rgba(255,255,255,0.2);
   border: none;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: white;
-  box-shadow: var(--shadow-md);
-}
-
-.btn-primary:active {
-  transform: scale(0.98);
-}
-
-.btn-secondary {
-  background: white;
-  color: var(--text-main);
-  border: 2px solid var(--border-light);
-}
-
-.btn-secondary:active {
-  transform: scale(0.98);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-icon {
-  font-size: 18px;
+  backdrop-filter: blur(10px);
+  
+  svg {
+    width: 22px;
+    height: 22px;
+    color: white;
+  }
+  
+  &:active {
+    transform: scale(0.92);
+    background: rgba(255,255,255,0.3);
+  }
 }
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
   padding: 12px 16px;
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--border-light);
+  overflow-x: hidden;
 }
 
-.toolbar-left {
-  display: flex;
-  gap: 12px;
+.search-bar {
   flex: 1;
-  min-width: 0;
-}
-
-.toolbar-left > * {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.search-box {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   background: var(--bg-input);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
+  transition: all 0.2s ease;
   min-width: 0;
+  
+  &:focus-within {
+    background: white;
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+  }
+  
+  .search-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text-main);
+    outline: none;
+    min-width: 0;
+    
+    &::placeholder {
+      color: var(--text-placeholder);
+    }
+  }
 }
 
-.search-box .search-input {
-  min-width: 0;
-  width: 100px;
-}
-
-.search-icon {
-  font-size: 16px;
-  opacity: 0.5;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  outline: none;
-}
-
-.filter-group {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.filter-select-custom {
+.filter-chip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 10px 14px;
   background: var(--bg-input);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   font-size: 14px;
+  color: var(--text-main);
   cursor: pointer;
+  transition: all 0.2s ease;
   white-space: nowrap;
-}
-
-.filter-arrow {
-  font-size: 10px;
-  color: var(--text-secondary);
-  margin-left: 8px;
-}
-
-/* 移动端响应式 */
-@media (max-width: 640px) {
-  .toolbar {
-    padding: 10px 12px;
+  flex-shrink: 0;
+  
+  svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-secondary);
   }
-
-  .toolbar-left {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-
-  .search-box {
-    flex: 1 1 100%;
-    order: 1;
-  }
-
-  .filter-select-custom {
-    flex: 0 0 auto;
-    order: 2;
-  }
-
-  .btn-secondary {
-    order: 3;
-    width: 100%;
-    margin-top: 4px;
-  }
-
-  .btn-secondary .btn-icon {
-    display: none;
+  
+  &:active {
+    transform: scale(0.97);
   }
 }
 
-.loading-state {
+.loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+  padding: 80px 20px;
+  gap: 16px;
   color: var(--text-secondary);
+  font-size: 14px;
 }
 
-.loading-spinner {
+.loading-pulse {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--primary-light);
-  border-top-color: var(--primary);
+  background: #7C3AED;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.5; }
 }
 
 .tenants-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-x: hidden;
 }
 
 .tenant-card {
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  animation: slideUp 0.4s ease backwards;
 }
 
-.card-header {
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-top {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
+  align-items: center;
+  padding: 16px 16px 12px;
 }
 
-.tenant-name {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin: 0 0 4px 0;
-}
-
-.tenant-contact {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.status-tag {
-  padding: 4px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-active {
-  background: #DCFCE7;
-  color: #166534;
-}
-
-.status-inactive {
-  background: #F1F5F9;
-  color: #64748B;
-}
-
-.card-body {
-  margin-bottom: 0;
-}
-
-.info-row {
+.tenant-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+  border-radius: 14px;
   display: flex;
-  padding: 6px 0;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
 }
 
-.info-label {
-  font-size: 14px;
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  
+  &.active {
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+    color: #5B21B6;
+  }
+  
+  &.inactive {
+    background: var(--bg-input);
+    color: var(--text-secondary);
+  }
+}
+
+.card-content {
+  padding: 0 16px 16px;
+}
+
+.tenant-header {
+  margin-bottom: 12px;
+  
+  .tenant-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 4px 0;
+  }
+  
+  .tenant-phone {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+}
+
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
   color: var(--text-secondary);
-  width: 60px;
-}
-
-.info-value {
-  font-size: 14px;
-  color: var(--text-main);
-  flex: 1;
-}
-
-.info-highlight .info-value {
-  font-weight: 500;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    color: #7C3AED;
+    opacity: 0.6;
+  }
 }
 
 .card-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 8px;
-  padding: 12px 16px;
-  border-top: 1px solid var(--border-light);
-  background: var(--bg-page);
+  padding: 12px 16px 16px;
 }
 
-.btn-action {
-  padding: 6px 14px;
+.action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.btn-action:active {
-  transform: scale(0.98);
-}
-
-.btn-view {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.btn-edit {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.btn-checkout {
-  background: var(--accent-light);
-  color: var(--accent);
-}
-
-.btn-disabled {
-  background: var(--bg-input);
-  color: var(--text-secondary);
-  cursor: not-allowed;
-}
-
-.btn-view {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.btn-edit {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.btn-checkout {
-  background: var(--accent-light);
-  color: var(--accent);
-}
-
-.btn-disabled {
-  background: var(--bg-input);
-  color: var(--text-placeholder);
-  cursor: not-allowed;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  &.secondary {
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+    color: #5B21B6;
+    
+    &:active {
+      background: #7C3AED;
+      color: white;
+    }
+  }
+  
+  &.danger {
+    background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+    color: #DC2626;
+    
+    &:active {
+      background: #DC2626;
+      color: white;
+    }
+  }
 }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  padding: 60px 20px;
   text-align: center;
+  
+  .empty-visual {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    
+    svg {
+      width: 40px;
+      height: 40px;
+      color: #7C3AED;
+    }
+  }
+  
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+  }
+  
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0 0 24px 0;
+  }
 }
 
-.empty-icon {
-  font-size: 64px;
-  opacity: 0.5;
-  margin-bottom: 16px;
-}
-
-.empty-text {
-  font-size: 16px;
-  color: var(--text-secondary);
-  margin: 0 0 32px 0;
-}
-
-.ripple-effect {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple-effect:active {
-  transform: scale(0.98);
+.btn-add-large {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  &:active {
+    transform: scale(0.97);
+  }
 }
 </style>

@@ -1,103 +1,115 @@
 <template>
-  <div class="houses-page">
+  <div class="houses-page page-container">
     <div class="page-header">
-      <div class="page-info">
-        <h1 class="page-title">房屋管理</h1>
-        <p class="page-subtitle">管理您的所有房产信息</p>
+      <div class="header-left">
+        <div class="header-icon">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+        </div>
+        <div class="header-info">
+          <h1 class="page-title">房屋管理</h1>
+          <p class="page-subtitle">{{ houses.length }} 间房产</p>
+        </div>
       </div>
-      <button class="btn btn-primary ripple-effect" @click="addHouse">
-        <span class="btn-icon">➕</span>
-        <span>添加房屋</span>
+      <button class="btn-add" @click="addHouse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
       </button>
     </div>
 
     <div class="toolbar">
-      <div class="toolbar-left">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input
-            :value="searchText"
-            type="text"
-            class="search-input"
-            placeholder="搜索标题、地址..."
-            @input="handleSearchInput(($event.target as HTMLInputElement).value)"
-          />
-        </div>
-      <div class="filter-group" @click="showStatusPicker = true">
-        <div class="filter-select-custom">
-          <span>{{ filterStatusText }}</span>
-          <span class="filter-arrow">▼</span>
-        </div>
+      <div class="search-bar">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+          :value="searchText"
+          type="text"
+          placeholder="搜索房屋..."
+          @input="handleSearchInput(($event.target as HTMLInputElement).value)"
+        />
       </div>
+      <div class="filter-chip" @click="showStatusPicker = true">
+        <span>{{ filterStatusText }}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
       </div>
-      <button
-        class="btn btn-secondary ripple-effect"
-        @click="exportToCSV"
-        :disabled="exporting"
-      >
-        <span class="btn-icon">📥</span>
-        <span>{{ exporting ? "导出中..." : "导出" }}</span>
-      </button>
     </div>
 
-    <div v-if="loading" class="loading-state">
-      <div class="loading-spinner"></div>
-      <p>加载中...</p>
+    <div v-if="loading" class="loading-container">
+      <div class="loading-pulse"></div>
+      <span>加载中...</span>
     </div>
 
     <div v-else class="houses-grid">
-      <div v-for="house in houses" :key="house.id" class="house-card">
-        <div class="card-header">
-          <span
-            class="house-tag"
-            :class="
-              house.status === 'AVAILABLE' ? 'tag-available' : 'tag-rented'
-            "
-          >
+      <div 
+        v-for="(house, index) in houses" 
+        :key="house.id" 
+        class="house-card"
+        :style="{ animationDelay: `${index * 0.05}s` }"
+      >
+        <div class="card-top">
+          <div class="status-badge" :class="house.status === 'AVAILABLE' ? 'available' : 'rented'">
             {{ house.status === "AVAILABLE" ? "空置" : "已租" }}
-          </span>
+          </div>
+          <div class="card-menu" @click.stop>
+            <button class="menu-btn" @click="editHouse(house)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-content">
           <h3 class="house-title">{{ house.title }}</h3>
-        </div>
-
-        <div class="card-body">
-          <div class="info-row">
-            <span class="info-icon">📍</span>
-            <span class="info-text">{{ house.address }}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-icon">📐</span>
-            <span class="info-text">{{ house.area }}㎡</span>
-          </div>
-          <div class="info-row info-highlight">
-            <span class="info-icon">💰</span>
-            <span class="info-price"
-              >¥{{ house.rent.toLocaleString()
-              }}<span class="price-unit">/月</span></span
-            >
+          <p class="house-address">{{ house.address }}</p>
+          
+          <div class="house-meta">
+            <div class="meta-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+              </svg>
+              <span>{{ house.area }}㎡</span>
+            </div>
+            <div class="meta-item price">
+              <span class="price-value">¥{{ house.rent.toLocaleString() }}</span>
+              <span class="price-unit">/月</span>
+            </div>
           </div>
         </div>
 
-        <div class="card-actions">
-          <button class="btn-action btn-edit" @click="editHouse(house)">
-            <span>✏️ 编辑</span>
-          </button>
-          <button
-            class="btn-action"
-            :class="house.status === 'AVAILABLE' ? 'btn-rent' : 'btn-checkout'"
+        <div class="card-action">
+          <button 
+            class="action-btn" 
+            :class="house.status === 'AVAILABLE' ? 'rent' : 'checkout'"
             @click="toggleStatus(house)"
           >
-            <span>{{
-              house.status === "AVAILABLE" ? "🏠 出租" : "🔄 退租"
-            }}</span>
+            <span>{{ house.status === "AVAILABLE" ? "标记出租" : "标记空置" }}</span>
           </button>
         </div>
       </div>
 
       <div v-if="houses.length === 0" class="empty-state">
-        <span class="empty-icon">🏚️</span>
-        <p class="empty-text">暂无房屋数据</p>
-        <button class="btn btn-primary" @click="addHouse">
-          添加第一个房屋
+        <div class="empty-visual">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path d="M9 22V12h6v10"/>
+          </svg>
+        </div>
+        <h3>还没有房屋</h3>
+        <p>添加您的第一间房产开始管理</p>
+        <button class="btn-add-large" @click="addHouse">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          <span>添加房屋</span>
         </button>
       </div>
     </div>
@@ -121,504 +133,531 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
-import { showToast, showDialog } from "vant";
-import dayjs from "dayjs";
-import { housesApi } from "@/api";
-import HouseModal from "./components/HouseModal.vue";
-import CommonPicker from "@/components/CommonPicker.vue";
+import { ref, computed, onMounted, watch } from "vue"
+import { showToast, showDialog } from "vant"
+import { housesApi } from "@/api"
+import HouseModal from "./components/HouseModal.vue"
+import CommonPicker from "@/components/CommonPicker.vue"
 
-const houses = ref<any[]>([]);
-const loading = ref(false);
-const exporting = ref(false);
-const searchText = ref("");
-const filterStatus = ref<string>("");
-const showModal = ref(false);
-const editingHouse = ref<any>(null);
-const showStatusPicker = ref(false);
+const houses = ref<any[]>([])
+const loading = ref(false)
+const searchText = ref("")
+const filterStatus = ref<string>("")
+const showModal = ref(false)
+const editingHouse = ref<any>(null)
+const showStatusPicker = ref(false)
 
 const statusOptions = [
-  { value: "", label: "全部状态" },
+  { value: "", label: "全部" },
   { value: "AVAILABLE", label: "空置" },
   { value: "RENTED", label: "已租" },
-];
+]
 
 const filterStatusText = computed(() => {
-  const option = statusOptions.find((o) => o.value === filterStatus.value);
-  return option?.label || "全部状态";
-});
+  const option = statusOptions.find((o) => o.value === filterStatus.value)
+  return option?.label || "全部"
+})
 
-let searchTimer: ReturnType<typeof setTimeout> | null = null;
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 const fetchHouses = async (search?: string) => {
-  loading.value = true;
+  loading.value = true
   try {
-    const params: any = {};
+    const params: any = {}
     if (search || searchText.value) {
-      params.search = search || searchText.value;
+      params.search = search || searchText.value
     }
     if (filterStatus.value) {
-      params.status = filterStatus.value;
+      params.status = filterStatus.value
     }
-    const data = (await housesApi.getList(Object.keys(params).length > 0 ? params : undefined)) as unknown as any[];
-    houses.value = Array.isArray(data) ? data : [];
+    const data = (await housesApi.getList(Object.keys(params).length > 0 ? params : undefined)) as unknown as any[]
+    houses.value = Array.isArray(data) ? data : []
   } catch (error) {
-    showToast({ type: "fail", message: "获取房屋列表失败" });
-    houses.value = [];
+    showToast({ type: "fail", message: "获取房屋列表失败" })
+    houses.value = []
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const handleSearchInput = (value: string) => {
   if (searchTimer) {
-    clearTimeout(searchTimer);
+    clearTimeout(searchTimer)
   }
   searchTimer = setTimeout(() => {
-    fetchHouses(value);
-  }, 300);
-};
+    fetchHouses(value)
+  }, 300)
+}
 
 watch(filterStatus, () => {
-  fetchHouses();
-});
+  fetchHouses()
+})
 
 const addHouse = () => {
-  editingHouse.value = null;
-  showModal.value = true;
-};
+  editingHouse.value = null
+  showModal.value = true
+}
 
 const editHouse = (house: any) => {
-  editingHouse.value = house;
-  showModal.value = true;
-};
+  editingHouse.value = house
+  showModal.value = true
+}
 
 const closeModal = () => {
-  showModal.value = false;
-  editingHouse.value = null;
-};
+  showModal.value = false
+  editingHouse.value = null
+}
 
 const handleSave = async (data: any) => {
   try {
     if (editingHouse.value) {
-      await housesApi.update(editingHouse.value.id, data);
-      showToast({ type: "success", message: "更新成功" });
+      await housesApi.update(editingHouse.value.id, data)
+      showToast({ type: "success", message: "更新成功" })
     } else {
-      await housesApi.create(data);
-      showToast({ type: "success", message: "添加成功" });
+      await housesApi.create(data)
+      showToast({ type: "success", message: "添加成功" })
     }
-    closeModal();
-    fetchHouses();
+    closeModal()
+    fetchHouses()
   } catch (error: any) {
     showToast({
       type: "fail",
       message: error.response?.data?.message || "操作失败",
-    });
+    })
   }
-};
+}
 
 const toggleStatus = async (house: any) => {
-  const newStatus = house.status === "AVAILABLE" ? "RENTED" : "AVAILABLE";
-  const action = newStatus === "RENTED" ? "出租" : "退租";
+  const newStatus = house.status === "AVAILABLE" ? "RENTED" : "AVAILABLE"
+  const action = newStatus === "RENTED" ? "出租" : "空置"
   try {
     await showDialog({
       title: "确认操作",
       message: `确定要将 "${house.title}" 标记为${action}吗？`,
       showCancelButton: true,
-    });
-    await housesApi.updateStatus(house.id, newStatus);
-    showToast({ type: "success", message: "操作成功" });
-    fetchHouses();
+    })
+    await housesApi.updateStatus(house.id, newStatus)
+    showToast({ type: "success", message: "操作成功" })
+    fetchHouses()
   } catch (error: any) {
     if (error !== "cancel") {
       showToast({
         type: "fail",
         message: error.response?.data?.message || "操作失败",
-      });
+      })
     }
   }
-};
+}
 
-const exportToCSV = () => {
-  exporting.value = true;
-  try {
-    const data = houses.value;
-    const rows = data.map((h) =>
-      [
-        h.title,
-        h.address,
-        h.area,
-        h.rent,
-        h.status === "AVAILABLE" ? "空置" : "已租",
-      ]
-        .map((v) => `"${v || ""}"`)
-        .join(","),
-    );
-
-    const csvContent = ["标题,地址,面积,租金,状态", ...rows].join("\n");
-    const blob = new Blob(["\ufeff" + csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `房屋列表_${dayjs().format("YYYY-MM-DD")}.csv`;
-    link.click();
-    showToast({ type: "success", message: "导出成功" });
-  } catch (error) {
-    showToast({ type: "fail", message: "导出失败" });
-  } finally {
-    exporting.value = false;
-  }
-};
-
-onMounted(() => fetchHouses());
+onMounted(() => fetchHouses())
 </script>
 
 <style scoped lang="less">
-
 .houses-page {
-  padding: 12px;
-  background: var(--bg-page);
   min-height: 100vh;
-  padding-bottom: 60px;
+  background: var(--bg-page);
+  padding-bottom: 100px;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 .page-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 16px 0 0;
-  margin-bottom: 16px;
+  padding: 20px 16px 16px;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
-.page-info h1 {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin: 0;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
-.page-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 4px 0 0 0;
-}
-
-.btn {
-  display: inline-flex;
+.header-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 12px;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
+  backdrop-filter: blur(10px);
+  
+  svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+  }
+}
+
+.header-info {
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 2px 0;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    margin: 0;
+  }
+}
+
+.btn-add {
+  width: 44px;
+  height: 44px;
+  background: rgba(255,255,255,0.2);
   border: none;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 500;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: white;
-  box-shadow: var(--shadow-md);
-}
-
-.btn-primary:active {
-  transform: scale(0.98);
-}
-
-.btn-secondary {
-  background: white;
-  color: var(--text-main);
-  border: 2px solid var(--border-light);
-}
-
-.btn-secondary:active {
-  transform: scale(0.98);
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-icon {
-  font-size: 18px;
+  backdrop-filter: blur(10px);
+  
+  svg {
+    width: 22px;
+    height: 22px;
+    color: white;
+  }
+  
+  &:active {
+    transform: scale(0.92);
+    background: rgba(255,255,255,0.3);
+  }
 }
 
 .toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
   padding: 12px 16px;
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  border-bottom: 1px solid var(--border-light);
+  overflow-x: hidden;
 }
 
-.toolbar-left {
-  display: flex;
-  gap: 12px;
+.search-bar {
   flex: 1;
-  min-width: 0;
-}
-
-.toolbar-left > * {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.search-box {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   background: var(--bg-input);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
+  transition: all 0.2s ease;
   min-width: 0;
+  
+  &:focus-within {
+    background: white;
+    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+  }
+  
+  .search-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: var(--text-main);
+    outline: none;
+    min-width: 0;
+    
+    &::placeholder {
+      color: var(--text-placeholder);
+    }
+  }
 }
 
-.search-box .search-input {
-  min-width: 0;
-  width: 100px;
-}
-
-.search-icon {
-  font-size: 16px;
-  opacity: 0.5;
-}
-
-.search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  outline: none;
-}
-
-.filter-group {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.filter-select-custom {
+.filter-chip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 10px 14px;
   background: var(--bg-input);
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
   font-size: 14px;
+  color: var(--text-main);
   cursor: pointer;
+  transition: all 0.2s ease;
   white-space: nowrap;
-}
-
-.filter-arrow {
-  font-size: 10px;
-  color: var(--text-secondary);
-  margin-left: 8px;
-}
-
-/* 移动端响应式 */
-@media (max-width: 640px) {
-  .toolbar {
-    padding: 10px 12px;
+  flex-shrink: 0;
+  
+  svg {
+    width: 14px;
+    height: 14px;
+    color: var(--text-secondary);
   }
-
-  .toolbar-left {
-    flex-wrap: wrap;
-    width: 100%;
-  }
-
-  .search-box {
-    flex: 1 1 100%;
-    order: 1;
-  }
-
-  .filter-select-custom {
-    flex: 0 0 auto;
-    order: 2;
-  }
-
-  .btn-secondary {
-    order: 3;
-    width: 100%;
-    margin-top: 4px;
-  }
-
-  .btn-secondary .btn-icon {
-    display: none;
+  
+  &:active {
+    transform: scale(0.97);
   }
 }
 
-.loading-state {
+.loading-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px;
+  padding: 80px 20px;
+  gap: 16px;
   color: var(--text-secondary);
+  font-size: 14px;
 }
 
-.loading-spinner {
+.loading-pulse {
   width: 40px;
   height: 40px;
-  border: 3px solid var(--primary-light);
-  border-top-color: var(--primary);
+  background: var(--primary);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.5; }
 }
 
 .houses-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow-x: hidden;
 }
 
 .house-card {
   background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  animation: slideUp 0.4s ease backwards;
 }
 
-.card-header {
-  margin-bottom: 16px;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.house-tag {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: var(--radius-sm);
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 16px 0;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
   font-size: 12px;
-  font-weight: 500;
-  margin-bottom: 8px;
+  font-weight: 600;
+  
+  &.available {
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    color: #047857;
+  }
+  
+  &.rented {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    color: #92400E;
+  }
 }
 
-.tag-available {
-  background: #dcfce7;
-  color: #166534;
+.card-menu {
+  .menu-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--bg-input);
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    svg {
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+    }
+    
+    &:active {
+      background: var(--primary-light);
+      
+      svg {
+        color: var(--primary);
+      }
+    }
+  }
 }
 
-.tag-rented {
-  background: #fef3c7;
-  color: #92400e;
+.card-content {
+  padding: 12px 16px 16px;
 }
 
 .house-title {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-main);
-  margin: 0;
+  margin: 0 0 4px 0;
 }
 
-.card-body {
-  margin-bottom: 0;
+.house-address {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 16px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.info-row {
+.house-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 0;
-}
-
-.info-icon {
-  font-size: 16px;
-}
-
-.info-text {
+  gap: 6px;
   font-size: 14px;
-  color: var(--text-main);
+  color: var(--text-secondary);
+  
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  &.price {
+    .price-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #059669;
+    }
+    
+    .price-unit {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  }
 }
 
-.info-highlight .info-price {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--primary);
+.card-action {
+  padding: 12px 16px 16px;
 }
 
-.price-unit {
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.card-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-light);
-}
-
-.btn-action {
-  padding: 6px 14px;
+.action-btn {
+  width: 100%;
+  padding: 12px;
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.btn-action:active {
-  transform: scale(0.98);
-}
-
-.btn-edit {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-.btn-rent {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.btn-checkout {
-  background: var(--accent-light);
-  color: var(--accent);
+  
+  &.rent {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+  }
+  
+  &.checkout {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
+  padding: 60px 20px;
   text-align: center;
-  grid-column: 1 / -1;
+  
+  .empty-visual {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    
+    svg {
+      width: 40px;
+      height: 40px;
+      color: #059669;
+    }
+  }
+  
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+  }
+  
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0 0 24px 0;
+  }
 }
 
-.empty-icon {
-  font-size: 64px;
-  opacity: 0.5;
-  margin-bottom: 16px;
-}
-
-.empty-text {
-  font-size: 16px;
-  color: var(--text-secondary);
-  margin: 0 0 32px 0;
-}
-
-.ripple-effect {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple-effect:active {
-  transform: scale(0.98);
+.btn-add-large {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  &:active {
+    transform: scale(0.97);
+  }
 }
 </style>

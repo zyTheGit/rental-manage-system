@@ -1,30 +1,34 @@
 <template>
-  <div class="utility-stats-page">
-    <div class="header-section">
-      <h1 class="page-title">水电统计</h1>
-      <div class="toolbar">
-        <div class="select-wrapper">
-          <div class="select-box" @click="showTenantPicker = true">
-            <span class="select-label">租户</span>
-            <span class="select-value">{{ selectedTenantText || '全部租户' }}</span>
-            <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </div>
-        </div>
-        <div class="select-wrapper">
-          <div class="select-box" @click="showYearPicker = true">
-            <span class="select-label">年份</span>
-            <span class="select-value">{{ selectedYearText }}</span>
-            <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </div>
-        </div>
-        <button class="search-btn" @click="searchStats">
-          <span>查询</span>
-        </button>
+  <div class="utility-stats-page page-container">
+    <div class="page-header">
+      <div class="page-info">
+        <h1 class="page-title">水电统计</h1>
+        <p class="page-subtitle">查看水电用量和费用趋势</p>
       </div>
+    </div>
+    
+    <div class="toolbar">
+      <div class="select-wrapper">
+        <div class="select-box" @click="showTenantPicker = true">
+          <span class="select-label">租户</span>
+          <span class="select-value">{{ selectedTenantText || '全部租户' }}</span>
+          <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+      <div class="select-wrapper">
+        <div class="select-box" @click="showYearPicker = true">
+          <span class="select-label">年份</span>
+          <span class="select-value">{{ selectedYearText }}</span>
+          <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+      <button class="search-btn" @click="searchStats">
+        <span>查询</span>
+      </button>
     </div>
 
     <div v-if="loading" class="loading-container">
@@ -201,27 +205,14 @@ onMounted(async () => {
 <style scoped lang="less">
 
 .utility-stats-page {
-  padding: 16px;
-  background: var(--bg-page);
-  min-height: 100vh;
-  padding-bottom: 60px;
-}
-
-.header-section {
-  margin-bottom: 20px;
-}
-
-.page-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin: 0 0 16px 0;
+  padding-bottom: 80px;
 }
 
 .toolbar {
   display: flex;
   gap: 12px;
   align-items: center;
+  margin-bottom: 20px;
 }
 
 .select-wrapper {

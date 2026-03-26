@@ -99,6 +99,7 @@ model Tenant {
   name       String
   phone      String
   idCard     String
+  email      String?       // 邮箱地址
   houseId    Int
   house      House         @relation(fields: [houseId], references: [id], onDelete: Cascade)
   rentStart  DateTime
