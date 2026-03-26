@@ -16,10 +16,11 @@
         <div class="search-box">
           <span class="search-icon">🔍</span>
           <input
-            v-model="searchText"
+            :value="searchText"
             type="text"
             class="search-input"
             placeholder="搜索标题、地址..."
+            @input="handleSearchInput(($event.target as HTMLInputElement).value)"
           />
         </div>
       <div class="filter-group" @click="showStatusPicker = true">
@@ -45,7 +46,7 @@
     </div>
 
     <div v-else class="houses-grid">
-      <div v-for="house in filteredHouses" :key="house.id" class="house-card">
+      <div v-for="house in houses" :key="house.id" class="house-card">
         <div class="card-header">
           <span
             class="house-tag"
@@ -92,7 +93,7 @@
         </div>
       </div>
 
-      <div v-if="filteredHouses.length === 0" class="empty-state">
+      <div v-if="houses.length === 0" class="empty-state">
         <span class="empty-icon">🏚️</span>
         <p class="empty-text">暂无房屋数据</p>
         <button class="btn btn-primary" @click="addHouse">
@@ -120,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { showToast, showDialog } from "vant";
 import dayjs from "dayjs";
 import { housesApi } from "@/api";
@@ -147,33 +148,40 @@ const filterStatusText = computed(() => {
   return option?.label || "全部状态";
 });
 
-const filteredHouses = computed(() => {
-  let filtered = houses.value;
-  if (searchText.value) {
-    const search = searchText.value.toLowerCase();
-    filtered = filtered.filter(
-      (h) =>
-        h.title.toLowerCase().includes(search) ||
-        h.address.toLowerCase().includes(search),
-    );
-  }
-  if (filterStatus.value) {
-    filtered = filtered.filter((h) => h.status === filterStatus.value);
-  }
-  return filtered;
-});
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-const fetchHouses = async () => {
+const fetchHouses = async (search?: string) => {
   loading.value = true;
   try {
-    const data = (await housesApi.getList()) as unknown as any[];
-    houses.value = data;
+    const params: any = {};
+    if (search || searchText.value) {
+      params.search = search || searchText.value;
+    }
+    if (filterStatus.value) {
+      params.status = filterStatus.value;
+    }
+    const data = (await housesApi.getList(Object.keys(params).length > 0 ? params : undefined)) as unknown as any[];
+    houses.value = Array.isArray(data) ? data : [];
   } catch (error) {
     showToast({ type: "fail", message: "获取房屋列表失败" });
+    houses.value = [];
   } finally {
     loading.value = false;
   }
 };
+
+const handleSearchInput = (value: string) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+  searchTimer = setTimeout(() => {
+    fetchHouses(value);
+  }, 300);
+};
+
+watch(filterStatus, () => {
+  fetchHouses();
+});
 
 const addHouse = () => {
   editingHouse.value = null;
@@ -234,7 +242,7 @@ const toggleStatus = async (house: any) => {
 const exportToCSV = () => {
   exporting.value = true;
   try {
-    const data = filteredHouses.value;
+    const data = houses.value;
     const rows = data.map((h) =>
       [
         h.title,

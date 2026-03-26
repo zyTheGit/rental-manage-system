@@ -4,12 +4,11 @@
       <div class="picker-header">
         <button class="btn btn-outline btn-sm" @click="$emit('cancel')">取消</button>
         <h3 class="picker-title">{{ title }}</h3>
-        <button class="btn btn-primary btn-sm" @click="$emit('confirm', { selectedValues })">确认</button>
+        <button class="btn btn-primary btn-sm" @click="handleConfirm">确认</button>
       </div>
       <van-date-picker
         v-model="selectedValues"
-        @confirm="(val: any) => $emit('confirm', val)"
-        @cancel="$emit('cancel')"
+        :show-toolbar="false"
       />
     </div>
   </div>
@@ -22,20 +21,33 @@ import dayjs from 'dayjs'
 const props = defineProps<{
   show: boolean
   title?: string
+  defaultDate?: string
 }>()
 
-defineEmits<{
-  confirm: [val: any]
+const emit = defineEmits<{
+  confirm: [val: { selectedValues: string[] }]
   cancel: []
 }>()
 
-const selectedValues = ref([dayjs().format('YYYY'), dayjs().format('MM'), dayjs().format('DD')])
+const getDefaultDateValues = () => {
+  if (props.defaultDate) {
+    const d = dayjs(props.defaultDate)
+    return [d.format('YYYY'), d.format('MM'), d.format('DD')]
+  }
+  return [dayjs().format('YYYY'), dayjs().format('MM'), dayjs().format('DD')]
+}
+
+const selectedValues = ref(getDefaultDateValues())
 
 watch(() => props.show, (val) => {
   if (val) {
-    selectedValues.value = [dayjs().format('YYYY'), dayjs().format('MM'), dayjs().format('DD')]
+    selectedValues.value = getDefaultDateValues()
   }
 })
+
+const handleConfirm = () => {
+  emit('confirm', { selectedValues: selectedValues.value })
+}
 </script>
 
 <style scoped lang="less">

@@ -6,11 +6,12 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Res,
   Header,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto, UpdateTenantDto } from './dto/tenant.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -24,9 +25,11 @@ export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
 
   @Get()
+  @ApiQuery({ name: 'search', required: false, description: '搜索姓名、电话或身份证' })
+  @ApiQuery({ name: 'status', required: false, description: '租户状态' })
   @ApiOperation({ summary: '获取所有租户' })
-  async findAll() {
-    return this.tenantsService.findAll();
+  async findAll(@Query() query: { search?: string; status?: string }) {
+    return this.tenantsService.findAll(query);
   }
 
   @Get(':id')

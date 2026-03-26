@@ -6,12 +6,13 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Res,
   Header,
   Logger,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { HousesService } from './houses.service';
 import { CreateHouseDto, UpdateHouseDto, UpdateHouseStatusDto } from './dto/house.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -27,10 +28,12 @@ export class HousesController {
   constructor(private readonly housesService: HousesService) {}
 
   @Get()
+  @ApiQuery({ name: 'search', required: false, description: '搜索标题或地址' })
+  @ApiQuery({ name: 'status', required: false, description: '房屋状态' })
   @ApiOperation({ summary: '获取所有房屋' })
-  async findAll() {
+  async findAll(@Query() query: { search?: string; status?: string }) {
     try {
-      return await this.housesService.findAll();
+      return await this.housesService.findAll(query);
     } catch (error) {
       this.logger.error(`获取所有房屋失败: ${error.message}`, error.stack);
       throw error;

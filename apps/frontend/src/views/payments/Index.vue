@@ -17,12 +17,12 @@
       @export="exportToCSV"
       @startDateClick="showStartDatePicker = true"
       @endDateClick="showEndDatePicker = true"
-      @typeClick="showTypePicker = true"
       @clearTenantFilter="clearTenantFilter"
+      @search="handleSearch"
     />
 
     <PaymentList
-      :payments="filteredPayments"
+      :payments="payments"
       :loading="loading"
       @viewDetail="viewPaymentDetail"
       @edit="handleEdit"
@@ -34,6 +34,7 @@
       v-if="showStartDatePicker || showEndDatePicker"
       :title="'选择日期'"
       :show="showStartDatePicker || showEndDatePicker"
+      :default-date="showStartDatePicker ? filters.startDate : filters.endDate"
       @confirm="onDateConfirm"
       @cancel="closeDatePickers"
     />
@@ -71,15 +72,6 @@
       @cancel="showTenantPicker = false"
     />
 
-    <CommonPicker
-      :show="showTypePicker"
-      title="选择类型"
-      :options="typeOptions"
-      v-model="filters.type"
-      @update:show="showTypePicker = $event"
-      @change="onTypeChange"
-    />
-
     <van-date-picker
       v-if="showDatePicker"
       v-model="datePickerValue"
@@ -91,12 +83,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from "vue";
+import { ref, onMounted, reactive, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { showToast, showDialog } from "vant";
 import dayjs from "dayjs";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { paymentsApi, tenantsApi } from "@/api";
 import PaymentFilters from "./components/PaymentFilters.vue";
 import PaymentList from "./components/PaymentList.vue";
@@ -105,10 +95,6 @@ import PaymentFormModal from "./components/PaymentFormModal.vue";
 import PaymentDetailModal from "./components/PaymentDetailModal.vue";
 import EditPaymentModal from "./components/EditPaymentModal.vue";
 import TenantPickerModal from "./components/TenantPickerModal.vue";
-import CommonPicker from "@/components/CommonPicker.vue";
-
-dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
 
 const route = useRoute();
 const router = useRouter();
@@ -120,7 +106,6 @@ const exporting = ref(false);
 
 const filters = reactive({
   searchText: "",
-  type: "" as string,
   startDate: "",
   endDate: "",
   tenantId: null as number | null,
@@ -134,15 +119,6 @@ const showTenantPicker = ref(false);
 const showDatePicker = ref(false);
 const showStartDatePicker = ref(false);
 const showEndDatePicker = ref(false);
-const showTypePicker = ref(false);
-
-const typeOptions = [
-  { value: '', label: '全部类型' },
-  { value: 'RENT', label: '房租' },
-  { value: 'WATER', label: '水费' },
-  { value: 'ELECTRIC', label: '电费' },
-  { value: 'OTHER', label: '其他' },
-];
 
 const selectedPayment = ref<any>(null);
 const editingPayment = ref<any>(null);
@@ -159,51 +135,52 @@ const datePickerValue = ref([
   dayjs().format("DD"),
 ]);
 
-const filteredPayments = computed(() => {
-  let filtered = payments.value;
-  if (filters.searchText) {
-    const search = filters.searchText.toLowerCase();
-    filtered = filtered.filter((p) =>
-      p.tenant?.name.toLowerCase().includes(search),
-    );
-  }
-  if (filters.tenantId) {
-    filtered = filtered.filter((p) => p.tenantId === filters.tenantId);
-  }
-  if (filters.type) {
-    filtered = filtered.filter((p) =>
-      p.items?.some((item: any) => item.type === filters.type),
-    );
-  }
-  if (filters.startDate && filters.endDate) {
-    const start = dayjs(filters.startDate);
-    const end = dayjs(filters.endDate);
-    filtered = filtered.filter((p) => {
-      const paidDate = dayjs(p.paidAt);
-      return (
-        paidDate.isSameOrAfter(start, "day") &&
-        paidDate.isSameOrBefore(end, "day")
-      );
-    });
-  }
-  return filtered;
-});
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-const fetchPayments = async () => {
+const fetchPayments = async (searchText?: string) => {
   loading.value = true;
   try {
-    const data = (await paymentsApi.getList()) as unknown as any[];
-    payments.value = data;
+    const params: any = {};
+    if (searchText || filters.searchText) {
+      params.search = searchText || filters.searchText;
+    }
+    if (filters.tenantId) {
+      params.tenantId = filters.tenantId;
+    }
+    if (filters.startDate) {
+      params.startDate = filters.startDate;
+    }
+    if (filters.endDate) {
+      params.endDate = filters.endDate;
+    }
+    
+    const data = (await paymentsApi.getList(Object.keys(params).length > 0 ? params : undefined)) as unknown as any[];
+    
+    payments.value = Array.isArray(data) ? data : [];
     if (route.query.tenantId) {
       filters.tenantId = Number(route.query.tenantId);
       filters.tenantName = (route.query.tenantName as string) || "";
     }
   } catch (error) {
     showToast({ type: "fail", message: "获取缴费记录失败" });
+    payments.value = [];
   } finally {
     loading.value = false;
   }
 };
+
+const handleSearch = (searchText: string) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+  searchTimer = setTimeout(() => {
+    fetchPayments(searchText);
+  }, 300);
+};
+
+watch([() => filters.startDate, () => filters.endDate], () => {
+  fetchPayments();
+});
 
 const openAddModal = async () => {
   try {
@@ -241,10 +218,6 @@ const onDateConfirm = ({ selectedValues }: any) => {
     filters.endDate = date;
   }
   closeDatePickers();
-};
-
-const onTypeChange = (value: any) => {
-  filters.type = value;
 };
 
 const selectTenant = (tenant: any) => {
@@ -347,7 +320,7 @@ const handleShare = () => {
 const exportToCSV = () => {
   exporting.value = true;
   try {
-    const data = filteredPayments.value;
+    const data = payments.value;
     const rows: string[] = [];
     const typesMap: Record<string, string> = {
       RENT: "房租",

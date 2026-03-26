@@ -44,11 +44,24 @@ export class PaymentsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
+  @ApiQuery({ name: 'search', required: false, description: '搜索租户姓名' })
   @ApiQuery({ name: 'type', required: false, description: '缴费类型' })
   @ApiQuery({ name: 'year', required: false, description: '年份' })
   @ApiQuery({ name: 'tenantId', required: false, description: '租客ID' })
+  @ApiQuery({ name: 'startDate', required: false, description: '开始日期(YYYY-MM-DD)' })
+  @ApiQuery({ name: 'endDate', required: false, description: '结束日期(YYYY-MM-DD)' })
   @ApiOperation({ summary: '获取所有缴费记录' })
-  async findAll(@Query() query: { type?: string; year?: string; tenantId?: number }) {
+  async findAll(
+    @Query()
+    query: {
+      search?: string;
+      type?: string;
+      year?: string;
+      tenantId?: number;
+      startDate?: string;
+      endDate?: string;
+    },
+  ) {
     return this.paymentsService.findAll(query);
   }
 

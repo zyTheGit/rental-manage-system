@@ -59,7 +59,11 @@ const fetchStats = async () => {
     if (chartRef.value && data.incomeTrend) {
       lineChart?.setOption({
         tooltip: {
-          trigger: 'axis'
+          trigger: 'axis',
+          formatter: (params: any) => {
+            const item = params[0]
+            return `${item.axisValue}<br/>${item.marker}收入: ¥${item.value}`
+          }
         },
         grid: {
           left: '3%',
@@ -72,7 +76,17 @@ const fetchStats = async () => {
           data: data.incomeTrend.map((i: any) => i.month)
         },
         yAxis: {
-          type: 'value'
+          type: 'value',
+          name: '元',
+          nameTextStyle: { color: '#64748B', fontSize: 12 },
+          axisLabel: {
+            formatter: (value: number) => {
+              if (value >= 10000) {
+                return (value / 10000).toFixed(1) + 'w'
+              }
+              return value
+            }
+          }
         },
         series: [{
           data: data.incomeTrend.map((i: any) => i.amount),
@@ -119,7 +133,9 @@ const fetchStats = async () => {
             borderWidth: 2
           },
           label: {
-            formatter: '{b}\n{d}%'
+            formatter: (params: any) => {
+              return `${params.name}\n¥${params.value}`
+            }
           }
         }]
       })

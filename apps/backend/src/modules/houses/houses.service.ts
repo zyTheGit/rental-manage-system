@@ -6,8 +6,16 @@ import { CreateHouseDto, UpdateHouseDto, UpdateHouseStatusDto } from './dto/hous
 export class HousesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(params?: { status?: string }) {
-    const where = params?.status ? { status: params.status } : {};
+  async findAll(params?: { status?: string; search?: string }) {
+    const where: any = {};
+
+    if (params?.status) {
+      where.status = params.status;
+    }
+
+    if (params?.search) {
+      where.OR = [{ title: { contains: params.search } }, { address: { contains: params.search } }];
+    }
 
     return this.prisma.house.findMany({
       where,

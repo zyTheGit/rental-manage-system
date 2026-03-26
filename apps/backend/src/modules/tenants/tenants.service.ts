@@ -6,8 +6,23 @@ import { CreateTenantDto, UpdateTenantDto } from './dto/tenant.dto';
 export class TenantsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(params?: { status?: string; search?: string }) {
+    const where: any = {};
+
+    if (params?.status) {
+      where.status = params.status;
+    }
+
+    if (params?.search) {
+      where.OR = [
+        { name: { contains: params.search } },
+        { phone: { contains: params.search } },
+        { idCard: { contains: params.search } },
+      ];
+    }
+
     return this.prisma.tenant.findMany({
+      where,
       include: {
         house: true,
       },

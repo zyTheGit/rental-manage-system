@@ -58,6 +58,11 @@ request.interceptors.response.use(
       
       switch (status) {
         case 401:
+          const currentPath = window.location.pathname
+          if (currentPath === '/login') {
+            // 登录页面返回401不跳转，让业务代码处理错误
+            break
+          }
           showToast('登录已过期，请重新登录')
           const userStore = useUserStore()
           userStore.logout()

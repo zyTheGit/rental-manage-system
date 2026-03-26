@@ -192,9 +192,10 @@ const handleMenuSelect = (key: string) => {
 
 const handleTabChange = (name: string) => {
   if (name === 'More') {
-    showSidebar.value = true
+    showSidebar.value = !showSidebar.value
     return
   }
+  showSidebar.value = false
   router.push({ name })
   activeTab.value = name
 }

@@ -16,10 +16,11 @@
         <div class="search-box">
           <span class="search-icon">🔍</span>
           <input
-            v-model="searchText"
+            :value="searchText"
             type="text"
             class="search-input"
             placeholder="搜索姓名、电话、身份证..."
+            @input="handleSearchInput(($event.target as HTMLInputElement).value)"
           />
         </div>
 <div class="filter-group" @click="showStatusPicker = true">
@@ -41,7 +42,7 @@
     </div>
 
     <div v-else class="tenants-list">
-      <div v-for="tenant in filteredTenants" :key="tenant.id" class="tenant-card">
+      <div v-for="tenant in tenants" :key="tenant.id" class="tenant-card">
         <div class="card-header">
           <div class="tenant-info">
             <h3 class="tenant-name">{{ tenant.name }}</h3>
@@ -85,7 +86,7 @@
         </div>
       </div>
 
-      <div v-if="filteredTenants.length === 0" class="empty-state">
+      <div v-if="tenants.length === 0" class="empty-state">
         <span class="empty-icon">👥</span>
         <p class="empty-text">暂无租户数据</p>
         <button class="btn btn-primary" @click="openAddModal">
@@ -115,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { showToast, showDialog } from 'vant'
 import dayjs from 'dayjs'
@@ -129,13 +130,13 @@ const houses = ref<any[]>([])
 const loading = ref(false)
 const exporting = ref(false)
 const searchText = ref('')
-const filterStatus = ref<string | null>(null)
+const filterStatus = ref<string>('')
 const showModal = ref(false)
 const editingTenant = ref<any>(null)
 const showStatusPicker = ref(false)
 
 const statusOptions = [
-  { value: null, label: '全部状态' },
+  { value: '', label: '全部状态' },
   { value: 'RENTED', label: '已租' },
   { value: 'CHECKED_OUT', label: '已退租' },
 ]
@@ -145,37 +146,44 @@ const filterStatusText = computed(() => {
   return option?.label || '全部状态'
 })
 
-const filteredTenants = computed(() => {
-  let filtered = tenants.value
-  if (searchText.value) {
-    const search = searchText.value.toLowerCase()
-    filtered = filtered.filter(t =>
-      t.name.toLowerCase().includes(search) ||
-      t.phone.includes(search) ||
-      t.idCard.includes(search)
-    )
-  }
-  if (filterStatus.value) {
-    filtered = filtered.filter(t => t.status === filterStatus.value)
-  }
-  return filtered
-})
-
 const formatDateRange = (start: string, end: string) => {
   return `${dayjs(start).format('YYYY-MM-DD')} ~ ${dayjs(end).format('YYYY-MM-DD')}`
 }
 
-const fetchTenants = async () => {
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+const fetchTenants = async (search?: string) => {
   loading.value = true
   try {
-    const data = await tenantsApi.getList() as unknown as any[]
-    tenants.value = data
+    const params: any = {}
+    if (search || searchText.value) {
+      params.search = search || searchText.value
+    }
+    if (filterStatus.value) {
+      params.status = filterStatus.value
+    }
+    const data = await tenantsApi.getList(Object.keys(params).length > 0 ? params : undefined) as unknown as any[]
+    tenants.value = Array.isArray(data) ? data : []
   } catch (error) {
     showToast({ type: 'fail', message: '获取租户列表失败' })
+    tenants.value = []
   } finally {
     loading.value = false
   }
 }
+
+const handleSearchInput = (value: string) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+  searchTimer = setTimeout(() => {
+    fetchTenants(value)
+  }, 300)
+}
+
+watch(filterStatus, () => {
+  fetchTenants()
+})
 
 const fetchHouses = async () => {
   try {
@@ -245,7 +253,7 @@ const confirmCheckoutFn = async (tenant: any) => {
 const exportToCSV = () => {
   exporting.value = true
   try {
-    const data = filteredTenants.value
+    const data = tenants.value
     const rows = data.map(t => [
       t.name, t.phone, t.idCard, t.house?.title || '',
       t.rentStart ? dayjs(t.rentStart).format('YYYY-MM-DD') : '',

@@ -51,6 +51,7 @@
     <van-popup v-model:show="showYearPicker" position="bottom" round>
       <van-picker
         :columns="yearOptions"
+        :model-value="selectedYearValues"
         @confirm="onYearConfirm"
         @cancel="showYearPicker = false"
       />
@@ -99,6 +100,8 @@ const yearOptions = computed(() => {
   return years.reverse()
 })
 
+const selectedYearValues = computed(() => [selectedYear.value])
+
 const tenantOptions = computed(() => {
   const options = [{ text: '全部租户', value: 0 }]
   return options.concat(tenants.value.map(tenant => ({
@@ -110,9 +113,10 @@ const tenantOptions = computed(() => {
 const fetchTenants = async () => {
   try {
     const data = await tenantsApi.getList() as unknown as any[]
-    tenants.value = data
+    tenants.value = Array.isArray(data) ? data : []
   } catch (error) {
     console.error('获取租户列表失败', error)
+    tenants.value = []
   }
 }
 
@@ -126,15 +130,33 @@ const fetchStats = async () => {
       data = await paymentsApi.getUtilityStats({ year: selectedYear.value })
     }
     
-    if (data && typeof data === 'object' && 'yearlyStats' in data) {
-      yearlyStats.value = data.yearlyStats
-      detailStats.value = Array.isArray(data.stats) ? data.stats : []
+    if (data && typeof data === 'object') {
+      if ('yearlyStats' in data) {
+        yearlyStats.value = data.yearlyStats || { totalElectricUsage: 0, totalWaterUsage: 0 }
+        monthlyStats.value = data.yearlyStats?.monthlyStats || []
+        detailStats.value = Array.isArray(data.stats) ? data.stats : []
+      } else if ('monthlyStats' in data) {
+        yearlyStats.value = { 
+          totalElectricUsage: data.totalElectricUsage || 0, 
+          totalWaterUsage: data.totalWaterUsage || 0 
+        }
+        monthlyStats.value = data.monthlyStats || []
+        detailStats.value = []
+      } else {
+        yearlyStats.value = { totalElectricUsage: 0, totalWaterUsage: 0 }
+        monthlyStats.value = []
+        detailStats.value = []
+      }
     } else {
       yearlyStats.value = { totalElectricUsage: 0, totalWaterUsage: 0 }
+      monthlyStats.value = []
       detailStats.value = Array.isArray(data) ? data : []
     }
   } catch (error) {
     showToast({ type: 'fail', message: '获取统计数据失败' })
+    yearlyStats.value = { totalElectricUsage: 0, totalWaterUsage: 0 }
+    monthlyStats.value = []
+    detailStats.value = []
   } finally {
     loading.value = false
   }
@@ -156,9 +178,12 @@ const onTenantConfirm = ({ selectedOptions }: any) => {
   showTenantPicker.value = false
 }
 
-const onYearConfirm = ({ selectedOptions }: any) => {
-  selectedYear.value = selectedOptions[0].value
-  selectedYearText.value = `${selectedYear.value}年`
+const onYearConfirm = ({ selectedOptions, selectedValues }: any) => {
+  const value = selectedValues?.[0] || selectedOptions?.[0]?.value
+  if (value) {
+    selectedYear.value = value
+    selectedYearText.value = `${value}年`
+  }
   showYearPicker.value = false
 }
 

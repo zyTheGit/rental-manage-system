@@ -7,16 +7,41 @@ import { DecimalUtil } from '../../common/utils/decimal.util';
 export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(params?: { type?: string; year?: string; tenantId?: number }) {
+  async findAll(params?: {
+    type?: string;
+    year?: string;
+    tenantId?: number;
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
     const where: any = {};
 
     if (params?.tenantId) {
       where.tenantId = params.tenantId;
     }
 
-    if (params?.year) {
+    if (params?.search) {
+      where.tenant = {
+        name: {
+          contains: params.search,
+        },
+      };
+    }
+
+    if (params?.startDate || params?.endDate) {
+      where.paidAt = {};
+      if (params?.startDate) {
+        where.paidAt.gte = new Date(params.startDate);
+      }
+      if (params?.endDate) {
+        const endDate = new Date(params.endDate);
+        endDate.setHours(23, 59, 59, 999);
+        where.paidAt.lte = endDate;
+      }
+    } else if (params?.year) {
       const startDate = new Date(`${params.year}-01-01`);
-      const endDate = new Date(`${params.year}-12-31`);
+      const endDate = new Date(`${params.year}-12-31T23:59:59.999`);
       where.paidAt = {
         gte: startDate,
         lte: endDate,

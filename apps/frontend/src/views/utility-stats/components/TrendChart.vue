@@ -44,7 +44,9 @@ const initChart = async () => {
   const waterData = new Array(12).fill(0)
   
   for (const stat of props.monthlyData || []) {
-    const monthIndex = stat.month - 1
+    const monthStr = stat.month || ''
+    const monthMatch = monthStr.match(/(\d+)/)
+    const monthIndex = monthMatch ? parseInt(monthMatch[1]) - 1 : -1
     if (monthIndex >= 0 && monthIndex < 12) {
       electricData[monthIndex] = stat.electricUsage || 0
       waterData[monthIndex] = stat.waterUsage || 0
@@ -54,7 +56,15 @@ const initChart = async () => {
   const option = {
     tooltip: {
       trigger: 'axis',
-      axisPointer: { type: 'shadow' }
+      axisPointer: { type: 'shadow' },
+      formatter: (params: any) => {
+        let result = `${params[0].axisValue}<br/>`
+        params.forEach((item: any) => {
+          const unit = item.seriesName === '用电' ? '度' : '吨'
+          result += `${item.marker}${item.seriesName}: ${item.value} ${unit}<br/>`
+        })
+        return result
+      }
     },
     grid: {
       left: '3%',
@@ -70,6 +80,8 @@ const initChart = async () => {
     },
     yAxis: {
       type: 'value',
+      name: '用量',
+      nameTextStyle: { color: '#64748B', fontSize: 12 },
       axisLine: { show: false },
       splitLine: { lineStyle: { color: '#F1F5F9' } },
       axisLabel: { color: '#64748B' }
@@ -96,7 +108,9 @@ const initChart = async () => {
 }
 
 watch(() => props.monthlyData, () => {
-  initChart()
+  if (props.monthlyData && props.monthlyData.length > 0) {
+    initChart()
+  }
 }, { deep: true })
 
 onMounted(() => {
