@@ -1,0 +1,345 @@
+// ===========================================
+// 通用组件样式
+// ===========================================
+
+// ===== Modal/Dialog =====
+.modal-overlay {
+  .modal-base();
+}
+
+.modal-container {
+  .modal-content-base();
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: @spacing-xl @spacing-xl;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: @font-xl;
+  font-weight: @font-semibold;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--bg-input);
+  border-radius: 50%;
+  font-size: @font-lg;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+
+  &:active {
+    background: var(--border-light);
+  }
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 @spacing-xl @spacing-xl;
+  -webkit-overflow-scrolling: touch;
+  .custom-scrollbar();
+}
+
+.modal-footer {
+  display: flex;
+  gap: @spacing-md;
+  padding: @spacing-xl;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+// ===== Picker 选择器 =====
+.picker-header {
+  .picker-header-base();
+}
+
+.picker-title {
+  font-size: @font-lg;
+  font-weight: @font-semibold;
+  color: var(--text-main);
+}
+
+.picker-close {
+  background: none;
+  border: none;
+  font-size: @font-xl;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.picker-options {
+  .picker-options-base();
+}
+
+.picker-option {
+  .picker-option-base();
+}
+
+.picker-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--border-light);
+  margin-right: @spacing-md;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+  position: relative;
+}
+
+.picker-option.active .picker-radio {
+  border-color: var(--primary);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+}
+
+.picker-option-content {
+  flex: 1;
+}
+
+.picker-option-title {
+  font-size: @font-md;
+  font-weight: @font-semibold;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.picker-option-subtitle {
+  font-size: @font-sm;
+  color: var(--text-secondary);
+}
+
+.picker-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+
+  &__icon {
+    font-size: 40px;
+    display: block;
+    margin-bottom: @spacing-md;
+  }
+}
+
+// ===== Button 按钮 =====
+.btn {
+  .btn-base();
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: @font-sm;
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: @font-lg;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+
+  &:active {
+    background: var(--primary-dark);
+  }
+}
+
+.btn-secondary {
+  background: var(--bg-input);
+  color: var(--text-main);
+
+  &:active {
+    background: var(--border-light);
+  }
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--text-main);
+
+  &:active {
+    background: var(--bg-input);
+  }
+}
+
+.btn-danger {
+  background: var(--accent);
+  color: white;
+
+  &:active {
+    opacity: 0.8;
+  }
+}
+
+.btn-text {
+  background: transparent;
+  color: var(--primary);
+  padding: 8px 12px;
+
+  &:active {
+    background: var(--primary-light);
+  }
+}
+
+// ===== Form 表单 =====
+.form-section {
+  margin-bottom: @spacing-xl;
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: @spacing-lg;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  margin-bottom: @spacing-md;
+  cursor: pointer;
+  transition: var(--transition-fast);
+
+  &:active {
+    background: var(--border-light);
+  }
+}
+
+.form-label {
+  font-size: @font-md;
+  color: var(--text-main);
+  font-weight: @font-medium;
+}
+
+.form-value {
+  font-size: @font-md;
+  color: var(--text-secondary);
+}
+
+.form-input-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  border-radius: var(--radius-md);
+  padding: 0 12px;
+  border: 1px solid var(--border-light);
+  transition: var(--transition-fast);
+
+  &:focus-within {
+    border-color: var(--border-focus);
+  }
+}
+
+.form-input {
+  .input-base();
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: @spacing-md;
+  font-size: @font-base;
+  color: var(--text-main);
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: var(--transition-fast);
+  resize: none;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: var(--border-focus);
+  }
+
+  &::placeholder {
+    color: var(--text-placeholder);
+  }
+}
+
+// ===== Vant Toast 覆盖样式 =====
+.van-toast {
+  .van-toast__icon {
+    font-size: 48px !important;
+  }
+  
+  .van-icon {
+    font-size: 48px !important;
+  }
+}
+
+// ===== State 状态组件 =====
+.empty-state {
+  .flex-center();
+  flex-direction: column;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+
+  &__icon {
+    font-size: 48px;
+    margin-bottom: @spacing-lg;
+    display: block;
+  }
+
+  &__text {
+    font-size: @font-base;
+    margin-bottom: @spacing-xl;
+    color: var(--text-secondary);
+  }
+
+  &__button {
+    margin-top: @spacing-lg;
+  }
+}
+
+.loading-state {
+  .flex-center();
+  flex-direction: column;
+  padding: 60px 20px;
+
+  &__spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--primary-light);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    .spin();
+  }
+
+  &__text {
+    margin-top: @spacing-lg;
+    color: var(--text-secondary);
+    font-size: @font-base;
+  }
+}

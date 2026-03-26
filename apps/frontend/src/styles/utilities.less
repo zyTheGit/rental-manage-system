@@ -1,0 +1,312 @@
+// ===========================================
+// 工具类样式
+// ===========================================
+
+// ===== Spacing 间距工具类 =====
+.p-xs { padding: @spacing-xs; }
+.p-sm { padding: @spacing-sm; }
+.p-md { padding: @spacing-md; }
+.p-lg { padding: @spacing-lg; }
+.p-xl { padding: @spacing-xl; }
+.p-2xl { padding: @spacing-2xl; }
+
+.px-xs { padding-left: @spacing-xs; padding-right: @spacing-xs; }
+.px-sm { padding-left: @spacing-sm; padding-right: @spacing-sm; }
+.px-md { padding-left: @spacing-md; padding-right: @spacing-md; }
+.px-lg { padding-left: @spacing-lg; padding-right: @spacing-lg; }
+.px-xl { padding-left: @spacing-xl; padding-right: @spacing-xl; }
+
+.py-xs { padding-top: @spacing-xs; padding-bottom: @spacing-xs; }
+.py-sm { padding-top: @spacing-sm; padding-bottom: @spacing-sm; }
+.py-md { padding-top: @spacing-md; padding-bottom: @spacing-md; }
+.py-lg { padding-top: @spacing-lg; padding-bottom: @spacing-lg; }
+.py-xl { padding-top: @spacing-xl; padding-bottom: @spacing-xl; }
+
+.pt-xs { padding-top: @spacing-xs; }
+.pt-sm { padding-top: @spacing-sm; }
+.pt-md { padding-top: @spacing-md; }
+.pt-lg { padding-top: @spacing-lg; }
+.pt-xl { padding-top: @spacing-xl; }
+
+.pb-xs { padding-bottom: @spacing-xs; }
+.pb-sm { padding-bottom: @spacing-sm; }
+.pb-md { padding-bottom: @spacing-md; }
+.pb-lg { padding-bottom: @spacing-lg; }
+.pb-xl { padding-bottom: @spacing-xl; }
+
+.m-xs { margin: @spacing-xs; }
+.m-sm { margin: @spacing-sm; }
+.m-md { margin: @spacing-md; }
+.m-lg { margin: @spacing-lg; }
+.m-xl { margin: @spacing-xl; }
+.m-2xl { margin: @spacing-2xl; }
+
+.mx-xs { margin-left: @spacing-xs; margin-right: @spacing-xs; }
+.mx-sm { margin-left: @spacing-sm; margin-right: @spacing-sm; }
+.mx-md { margin-left: @spacing-md; margin-right: @spacing-md; }
+.mx-lg { margin-left: @spacing-lg; margin-right: @spacing-lg; }
+.mx-xl { margin-left: @spacing-xl; margin-right: @spacing-xl; }
+
+.my-xs { margin-top: @spacing-xs; margin-bottom: @spacing-xs; }
+.my-sm { margin-top: @spacing-sm; margin-bottom: @spacing-sm; }
+.my-md { margin-top: @spacing-md; margin-bottom: @spacing-md; }
+.my-lg { margin-top: @spacing-lg; margin-bottom: @spacing-lg; }
+.my-xl { margin-top: @spacing-xl; margin-bottom: @spacing-xl; }
+
+.mt-xs { margin-top: @spacing-xs; }
+.mt-sm { margin-top: @spacing-sm; }
+.mt-md { margin-top: @spacing-md; }
+.mt-lg { margin-top: @spacing-lg; }
+.mt-xl { margin-top: @spacing-xl; }
+
+.mb-xs { margin-bottom: @spacing-xs; }
+.mb-sm { margin-bottom: @spacing-sm; }
+.mb-md { margin-bottom: @spacing-md; }
+.mb-lg { margin-bottom: @spacing-lg; }
+.mb-xl { margin-bottom: @spacing-xl; }
+
+.ml-xs { margin-left: @spacing-xs; }
+.ml-sm { margin-left: @spacing-sm; }
+.ml-md { margin-left: @spacing-md; }
+.ml-lg { margin-left: @spacing-lg; }
+.ml-xl { margin-left: @spacing-xl; }
+
+.mr-xs { margin-right: @spacing-xs; }
+.mr-sm { margin-right: @spacing-sm; }
+.mr-md { margin-right: @spacing-md; }
+.mr-lg { margin-right: @spacing-lg; }
+.mr-xl { margin-right: @spacing-xl; }
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.my-auto {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.m-auto {
+  margin: auto;
+}
+
+// ===== Animation 动画工具类 =====
+.fade-in {
+  .fade-in();
+}
+
+.slide-up {
+  .slide-up();
+}
+
+.slide-in-bottom {
+  .slide-in-bottom();
+}
+
+.rotate {
+  .spin();
+}
+
+// 加载动画
+.loading-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: loadingDot 1.4s ease-in-out infinite both;
+
+  &:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  &:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+}
+
+@keyframes loadingDot {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+// 文本工具
+.text-ellipsis {
+  .text-ellipsis();
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-primary {
+  color: var(--primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-placeholder);
+}
+
+.text-danger {
+  color: var(--accent);
+}
+
+.text-success {
+  color: @color-success;
+}
+
+.text-warning {
+  color: @color-warning;
+}
+
+// 字体大小
+.text-xs { font-size: @font-xs; }
+.text-sm { font-size: @font-sm; }
+.text-base { font-size: @font-base; }
+.text-md { font-size: @font-md; }
+.text-lg { font-size: @font-lg; }
+.text-xl { font-size: @font-xl; }
+.text-2xl { font-size: @font-2xl; }
+.text-3xl { font-size: @font-3xl; }
+
+// 字体粗细
+.font-normal { font-weight: @font-normal; }
+.font-medium { font-weight: @font-medium; }
+.font-semibold { font-weight: @font-semibold; }
+.font-bold { font-weight: @font-bold; }
+
+// 显示工具
+.hidden {
+  display: none;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.visible {
+  visibility: visible;
+}
+
+// 溢出工具
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-auto {
+  overflow: auto;
+}
+
+.overflow-scroll {
+  overflow: scroll;
+}
+
+// 定位工具
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.fixed {
+  position: fixed;
+}
+
+.sticky {
+  position: sticky;
+}
+
+// 宽高工具
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.min-h-screen {
+  min-height: 100vh;
+}
+
+// 圆角工具
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+
+.rounded-xl {
+  border-radius: var(--radius-xl);
+}
+
+.rounded-full {
+  border-radius: 50%;
+}
+
+// 阴影工具
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.shadow-none {
+  box-shadow: none;
+}
+
+// 背景工具
+.bg-white {
+  background: var(--bg-card);
+}
+
+.bg-gray {
+  background: var(--bg-input);
+}
+
+.bg-primary {
+  background: var(--primary);
+}
+
+.bg-primary-light {
+  background: var(--primary-light);
+}
+
+.bg-danger {
+  background: var(--accent);
+}
+
+.bg-danger-light {
+  background: var(--accent-light);
+}
