@@ -1022,6 +1022,7 @@ watch(
   font-size: 15px;
   font-weight: 500;
   background: white;
+  box-sizing: border-box;
   
   &:focus {
     outline: none;
