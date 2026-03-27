@@ -10,6 +10,7 @@ import { AdminInitModule } from './modules/admin-init/admin-init.module';
 import { JwtConfigModule } from './jwt-config/jwt-config.module';
 import { RemindersModule } from './modules/reminders/reminders.module';
 import { EmailModule } from './modules/email/email.module';
+import { SystemModule } from './modules/system/system.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { EmailModule } from './modules/email/email.module';
     AdminInitModule,
     RemindersModule,
     EmailModule,
+    SystemModule,
   ],
 })
 export class AppModule {}
