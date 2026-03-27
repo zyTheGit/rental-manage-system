@@ -2,6 +2,7 @@ import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
+import { TemplateService } from './template.service';
 
 @Injectable()
 export class EmailService {
@@ -9,7 +10,10 @@ export class EmailService {
   private transporter: Transporter | null = null;
   private smtpConfig: { host: string; port: number; user: string } | null = null;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private templateService: TemplateService,
+  ) {
     this.initTransporter();
   }
 
@@ -91,6 +95,9 @@ export class EmailService {
     houseTitle: string,
     reminderDay: number,
     dueDay: number,
+    rent?: number,
+    balance?: number,
+    landlordPhone?: string,
   ) {
     if (!this.transporter) {
       const msg = 'Email service is not configured. Please check SMTP settings in .env file.';
@@ -101,46 +108,30 @@ export class EmailService {
     const fromEmail = this.configService.get<string>('SMTP_FROM') || 
                       this.configService.get<string>('SMTP_USER');
 
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+    const hasDebt = balance && balance > 0;
+    const hasSurplus = balance && balance < 0;
+    const displayRent = rent || 0;
+    const displayBalance = balance || 0;
+    const totalAmount = displayRent + (hasDebt ? displayBalance : 0);
+
+    const { subject, html } = this.templateService.render('payment-reminder', {
+      tenantName,
+      houseTitle,
+      reminderDay,
+      dueDay,
+      rent: displayRent,
+      balance: displayBalance,
+      hasDebt,
+      hasSurplus,
+      totalAmount,
+      landlordPhone,
+    });
 
     const mailOptions = {
       from: fromEmail,
       to,
-      subject: `【缴费提醒】${tenantName} 您好，您的房租即将到期`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;">
-            <h1 style="margin: 0; font-size: 24px;">缴费提醒</h1>
-          </div>
-          <div style="background: #f9fafb; padding: 20px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb;">
-            <p style="font-size: 16px; color: #374151;">尊敬的 <strong>${tenantName}</strong> 您好：</p>
-            <p style="font-size: 15px; color: #4b5563; line-height: 1.6;">
-              您租住的房屋 <strong>${houseTitle}</strong> 本月缴费提醒已触发。
-            </p>
-            <div style="background: white; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
-              <p style="margin: 0 0 10px 0; color: #059669; font-weight: bold;">📅 缴费时间安排</p>
-              <p style="margin: 5px 0; color: #374151;">
-                <span style="color: #6b7280;">提醒日期：</span>
-                每月 <strong>${reminderDay}</strong> 号
-              </p>
-              <p style="margin: 5px 0; color: #374151;">
-                <span style="color: #6b7280;">逾期日期：</span>
-                每月 <strong>${dueDay}</strong> 号
-              </p>
-            </div>
-            <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">
-              请您在规定时间内完成缴费，如有疑问请联系房东。
-            </p>
-            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-            <p style="font-size: 12px; color: #9ca3af; text-align: center;">
-              此邮件由系统自动发送，请勿回复。<br>
-              发送时间：${currentYear}年${currentMonth}月${now.getDate()}日
-            </p>
-          </div>
-        </div>
-      `,
+      subject,
+      html,
     };
 
     try {

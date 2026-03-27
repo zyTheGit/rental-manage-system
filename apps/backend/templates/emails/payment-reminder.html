@@ -1,0 +1,184 @@
+<!-- Greeting -->
+<p style="margin: 0 0 4px 0; font-size: 14px; color: #6b7280; font-family: Arial, sans-serif;">
+  &#23562;&#25964;&#30340;&#31199;&#25143;
+</p>
+<p style="margin: 0 0 20px 0; font-size: 18px; font-weight: 600; color: #111827; font-family: Arial, sans-serif;">
+  <%= tenantName %> &#24744;&#22909;
+</p>
+
+<!-- House Info -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f9fafb; border-radius: 8px; margin-bottom: 16px;">
+  <tr>
+    <td style="padding: 14px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td width="40" valign="top">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background-color: #3b82f6; border-radius: 6px;">
+              <tr>
+                <td style="padding: 8px; text-align: center;">
+                  <span style="font-size: 16px;">&#127968;</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+          <td style="padding-left: 12px;" valign="top">
+            <p style="margin: 0 0 2px 0; font-size: 11px; color: #9ca3af; text-transform: uppercase; font-family: Arial, sans-serif;">
+              &#31199;&#20303;&#25151;&#23627;
+            </p>
+            <p style="margin: 0; font-size: 15px; font-weight: 600; color: #111827; font-family: Arial, sans-serif;">
+              <%= houseTitle %>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Amount Card -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ecfdf5; border-radius: 8px; margin-bottom: 16px; border: 1px solid #a7f3d0;">
+  <tr>
+    <td style="padding: 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td>
+            <p style="margin: 0 0 4px 0; font-size: 12px; color: #047857; font-weight: 500; font-family: Arial, sans-serif;">
+              &#26412;&#26376;&#25151;&#31199;
+            </p>
+            <p style="margin: 0; font-size: 26px; font-weight: 700; color: #059669; font-family: Arial, sans-serif;">
+              &#65509;<%= rent.toFixed(2) %>
+            </p>
+          </td>
+          <td align="right" valign="middle">
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="background-color: #059669; border-radius: 16px;">
+              <tr>
+                <td style="padding: 6px 14px;">
+                  <span style="font-size: 12px; color: #ffffff; font-weight: 500; font-family: Arial, sans-serif;">&#24453;&#32564;&#36153;</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<% if (hasDebt) { %>
+<!-- Debt Warning -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fef3c7; border-radius: 8px; margin-bottom: 16px; border: 1px solid #fcd34d;">
+  <tr>
+    <td style="padding: 14px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td width="32" valign="top">
+            <span style="font-size: 18px;">&#9888;</span>
+          </td>
+          <td style="padding-left: 10px;" valign="top">
+            <p style="margin: 0 0 2px 0; font-size: 13px; font-weight: 600; color: #92400e; font-family: Arial, sans-serif;">
+              &#19978;&#26399;&#27424;&#36153;
+            </p>
+            <p style="margin: 0; font-size: 18px; font-weight: 700; color: #dc2626; font-family: Arial, sans-serif;">
+              &#65509;<%= balance.toFixed(2) %>
+            </p>
+          </td>
+          <td align="right" valign="middle">
+            <p style="margin: 0; font-size: 12px; color: #92400e; font-family: Arial, sans-serif;">
+              &#38656;&#34917;&#32564;
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<% } %>
+
+<% if (hasSurplus) { %>
+<!-- Surplus Info -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ecfdf5; border-radius: 8px; margin-bottom: 16px; border: 1px solid #a7f3d0;">
+  <tr>
+    <td style="padding: 14px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td width="32" valign="top">
+            <span style="font-size: 18px; color: #059669;">&#10003;</span>
+          </td>
+          <td style="padding-left: 10px;" valign="top">
+            <p style="margin: 0 0 2px 0; font-size: 13px; font-weight: 600; color: #047857; font-family: Arial, sans-serif;">
+              &#36134;&#25143;&#32467;&#20313;
+            </p>
+            <p style="margin: 0; font-size: 18px; font-weight: 700; color: #059669; font-family: Arial, sans-serif;">
+              &#65509;<%= Math.abs(balance).toFixed(2) %>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<% } %>
+
+<!-- Schedule -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td style="padding: 14px 0; border-top: 1px dashed #e5e7eb;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td width="50%">
+            <p style="margin: 0 0 4px 0; font-size: 11px; color: #9ca3af; text-transform: uppercase; font-family: Arial, sans-serif;">
+              &#25552;&#37266;&#26085;&#26399;
+            </p>
+            <p style="margin: 0; font-size: 15px; font-weight: 600; color: #374151; font-family: Arial, sans-serif;">
+              &#27599;&#26376; <%= reminderDay %> &#26085;
+            </p>
+          </td>
+          <td width="50%">
+            <p style="margin: 0 0 4px 0; font-size: 11px; color: #9ca3af; text-transform: uppercase; font-family: Arial, sans-serif;">
+              &#36926;&#26399;&#26085;&#26399;
+            </p>
+            <p style="margin: 0; font-size: 15px; font-weight: 600; color: #dc2626; font-family: Arial, sans-serif;">
+              &#27599;&#26376; <%= dueDay %> &#26085;
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Total -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #111827; border-radius: 8px; margin-top: 16px;">
+  <tr>
+    <td style="padding: 18px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td>
+            <p style="margin: 0; font-size: 13px; color: rgba(255,255,255,0.7); font-family: Arial, sans-serif;">
+              &#26412;&#26399;&#24212;&#32564;
+            </p>
+          </td>
+          <td align="right">
+            <p style="margin: 0; font-size: 22px; font-weight: 700; color: #10b981; font-family: Arial, sans-serif;">
+              &#65509;<%= totalAmount.toFixed(2) %>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<% if (landlordPhone) { %>
+<!-- Contact -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 16px;">
+  <tr>
+    <td align="center">
+      <p style="margin: 0; font-size: 13px; color: #6b7280; font-family: Arial, sans-serif;">
+        &#22914;&#26377;&#30097;&#38382;&#35831;&#32852;&#31995;&#25151;&#19996;
+        <span style="color: #059669; font-weight: 500;"><%= landlordPhone %></span>
+      </p>
+    </td>
+  </tr>
+</table>
+<% } %>

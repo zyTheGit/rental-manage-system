@@ -1,0 +1,9 @@
+{
+  "payment-reminder": {
+    "subject": "【缴费提醒】<%= tenantName %>您好，<%= monthName %>房租缴费通知",
+    "title": "缴费提醒",
+    "icon": "💰",
+    "headerColor": "#059669",
+    "headerColorDark": "#047857"
+  }
+}

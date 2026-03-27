@@ -6,7 +6,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && node -e \"const fs=require('fs');const path=require('path');const src=path.join(__dirname,'templates');const dest=path.join(__dirname,'dist','src','templates');fs.cpSync(src,dest,{recursive:true});console.log('Templates copied to dist')\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "dev": "nest start --watch",
@@ -40,6 +40,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "decimal.js": "^10.6.0",
+    "ejs": "^5.0.1",
     "nodemailer": "^8.0.4",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

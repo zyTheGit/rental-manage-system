@@ -215,6 +215,8 @@ export class RemindersService {
           tenant.house?.title || '未知房屋',
           reminder.reminderDay,
           reminder.dueDay,
+          tenant.house?.rent,
+          tenant.balance,
         );
 
         await this.prisma.paymentReminder.update({
@@ -284,6 +286,8 @@ export class RemindersService {
         tenant.house?.title || '未知房屋',
         reminder.reminderDay,
         reminder.dueDay,
+        tenant.house?.rent,
+        tenant.balance,
       );
 
       return {
