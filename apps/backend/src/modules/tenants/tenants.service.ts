@@ -220,6 +220,7 @@ export class TenantsService {
       tenantId: id,
       lastWaterEndRead,
       lastElectricEndRead,
+      balance: tenant.balance || 0,
     };
   }
 

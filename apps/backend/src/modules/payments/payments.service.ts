@@ -152,6 +152,7 @@ export class PaymentsService {
         name: payment.tenant.name,
         phone: payment.tenant.phone,
         house: payment.tenant.house,
+        balance: payment.tenant.balance || 0,
       },
       payments: allPayments,
     };

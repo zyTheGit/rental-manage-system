@@ -231,12 +231,30 @@
           </div>
 
           <div class="summary-card">
-            <div class="summary-row">
-              <span class="summary-label">费用合计</span>
-              <div class="summary-total">
-                <span class="summary-currency">¥</span>
-                <span class="summary-amount">{{ currentTotal }}</span>
+            <div class="summary-main">
+              <div class="summary-left">
+                <div class="need-label">实际需缴</div>
+                <div class="need-amount">¥{{ actualNeedToPay }}</div>
+                <div v-if="lastBalance > 0" class="need-detail">
+                  含上期欠费 ¥{{ lastBalance.toFixed(2) }}
+                </div>
               </div>
+              <div class="summary-right">
+                <div class="pay-label">本次缴费</div>
+                <div class="pay-input-wrap">
+                  <span class="pay-currency">¥</span>
+                  <input 
+                    v-model.number="form.actualPaid" 
+                    type="number" 
+                    class="pay-input"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+            <div v-if="balanceAfterPayment !== 0" class="summary-result" :class="balanceAfterPayment > 0 ? 'debt' : 'surplus'">
+              <span class="result-icon">{{ balanceAfterPayment > 0 ? '⚠️' : '✓' }}</span>
+              <span>缴费后{{ balanceAfterPayment > 0 ? '欠费' : '结余' }} ¥{{ Math.abs(balanceAfterPayment).toFixed(2) }}</span>
             </div>
           </div>
 
@@ -322,6 +340,7 @@ const form = reactive({
   tenantId: null as number | null,
   paidAt: new Date().toISOString(),
   remark: "",
+  actualPaid: 0,
 });
 
 const feeChecks = reactive({
@@ -353,6 +372,8 @@ const houseInfo = reactive({
   waterRate: 3,
 });
 
+const lastBalance = ref(0);
+
 const tenantText = ref("");
 const paidAtText = ref(dayjs().format("YYYY-MM-DD"));
 const showTenantPicker = ref(false);
@@ -379,6 +400,17 @@ const currentTotalNum = computed(() => {
   if (feeChecks.water) total += Number(feeAmounts.water) || 0;
   if (feeChecks.other) total += Number(feeAmounts.other) || 0;
   return total;
+});
+
+const actualNeedToPay = computed(() => {
+  const need = currentTotalNum.value + lastBalance.value;
+  return need.toFixed(2);
+});
+
+const balanceAfterPayment = computed(() => {
+  const paid = Number(form.actualPaid) || 0;
+  const need = Number(actualNeedToPay.value) || 0;
+  return need - paid;
 });
 
 const tenantOptions = computed(() => {
@@ -468,6 +500,8 @@ const handleTenantChange = async (tenantId: number) => {
     const lastReads = (await tenantsApi.getLastMeterReads(tenant.id)) as any;
     meterReads.lastElectricEndRead = lastReads.lastElectricEndRead || 0;
     meterReads.lastWaterEndRead = lastReads.lastWaterEndRead || 0;
+    lastBalance.value = lastReads.balance || 0;
+    form.actualPaid = currentTotalNum.value + lastBalance.value;
   } catch (error) {
     console.error("获取上次读数失败", error);
   }
@@ -529,7 +563,7 @@ const handleSave = () => {
     items,
     paidAt: form.paidAt,
     remark: form.remark,
-    actualPaid: currentTotalNum.value,
+    actualPaid: Number(form.actualPaid) || 0,
   });
 };
 
@@ -540,8 +574,10 @@ watch(
       form.tenantId = null;
       form.paidAt = new Date().toISOString();
       form.remark = "";
+      form.actualPaid = 0;
       tenantText.value = "";
       paidAtText.value = dayjs().format("YYYY-MM-DD");
+      lastBalance.value = 0;
       feeChecks.rent = false;
       feeChecks.electric = false;
       feeChecks.water = false;
@@ -1033,37 +1069,109 @@ watch(
 
 .summary-card {
   margin: 16px;
-  padding: 16px;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
   color: white;
 }
 
-.summary-row {
+.summary-main {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 20px;
 }
 
-.summary-label {
-  font-size: 14px;
-  opacity: 0.9;
+.summary-left {
+  flex: 1;
 }
 
-.summary-total {
+.need-label {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.need-amount {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.need-detail {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 4px;
+  background: rgba(255,255,255,0.15);
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.summary-right {
+  text-align: right;
+}
+
+.pay-label {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+.pay-input-wrap {
   display: flex;
-  align-items: baseline;
+  align-items: center;
+  justify-content: flex-end;
   gap: 2px;
+  background: rgba(255,255,255,0.15);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
 }
 
-.summary-currency {
-  font-size: 16px;
+.pay-currency {
+  font-size: 18px;
   font-weight: 600;
 }
 
-.summary-amount {
-  font-size: 28px;
+.pay-input {
+  width: 80px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 24px;
   font-weight: 700;
+  color: white;
+  text-align: right;
+  outline: none;
+  
+  &::placeholder {
+    color: rgba(255,255,255,0.5);
+    font-weight: 400;
+  }
+}
+
+.summary-result {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  
+  &.debt {
+    background: rgba(239, 68, 68, 0.2);
+    color: #FCA5A5;
+  }
+  
+  &.surplus {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6EE7B7;
+  }
+}
+
+.result-icon {
+  font-size: 14px;
 }
 
 .remark-group {
