@@ -50,3 +50,4 @@ apps/backend/dev.db-journal
 # 临时文件
 tmp/
 temp/
+nul
